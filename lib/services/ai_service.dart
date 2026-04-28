@@ -46,7 +46,7 @@ class AiService {
         'gemini-2.5-flash',
         'gemini-2.0-flash',
         'gemini-1.5-flash',
-        'gemini-pro',
+        'gemini-1.5-pro',
       ];
 
       String lastError = '';
@@ -80,9 +80,9 @@ class AiService {
           lastError = e.toString();
         }
       }
-      return 'ШІ не відповідає. Остання помилка: $lastError';
+      return null;
     } catch (e) {
-      return 'Критична помилка ШІ: $e';
+      return null;
     }
   }
 }

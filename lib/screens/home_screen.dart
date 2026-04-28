@@ -46,29 +46,43 @@ class _HomeScreenState extends State<HomeScreen> {
         ? '°C'
         : (_selectedUnit == TempUnit.fahrenheit ? '°F' : 'K');
 
-    String s1 = 'Зараз надворі $desc, температура становить $tempStr$unit.';
-    String s2 =
-        'Відчувається як $feelsStr$unit, вітер швидкістю ${w.windSpeed.toStringAsFixed(1)} м/с.';
+    // 1. Базове речення (Місто + поточний стан + температура)
+    String s1 = 'У місті ${w.cityName} зараз $desc, температура $tempStr$unit (відчувається як $feelsStr$unit).';
 
-    String s3 = '';
+    // 2. Опади та вітер
+    String s2 = 'Вітер ${w.windSpeed.toStringAsFixed(1)} м/с.';
     if (w.precipitation > 0) {
-      s3 =
-      'Очікуються опади (${w.precipitation} мм), краще захопити парасольку.';
-    } else if (w.humidity > 80) {
-      s3 = 'Досить висока вологість повітря (${w.humidity}%).';
-    } else if (w.aqi >= 4) {
-      s3 = 'Погана якість повітря, краще обмежити перебування на вулиці.';
-    } else if (w.windSpeed > 10) {
-      s3 = 'Надворі сильний вітер, будьте обережні.';
+      s2 += ' Очікуються опади (${w.precipitation} мм).';
     } else {
-      if (w.isDayTime) {
-        s3 = 'Сприятливий час для прогулянки на свіжому повітрі.';
-      } else {
-        s3 = 'Бажаємо приємного та спокійного дня.';
-      }
+      s2 += ' Без значних опадів.';
     }
 
-    return '$s1 $s2 $s3';
+    // 3. Якість повітря
+    String s3 = w.aqi >= 4 ? 'Якість повітря погіршена.' : 'Повітря в нормі.';
+
+    // 4. Поради щодо одягу та парасолі
+    String s4 = '';
+    if (w.precipitation > 0) {
+      s4 = 'Обов\'язково захопіть парасолю!';
+    } else if (w.temperature < 0) {
+      s4 = 'Одягайтеся дуже тепло, надворі мороз.';
+    } else if (w.temperature >= 0 && w.temperature < 15) {
+      s4 = 'Варто накинути теплу куртку або светр.';
+    } else if (w.temperature >= 15 && w.temperature < 25) {
+      s4 = 'Комфортна погода для легкого одягу.';
+    } else {
+      s4 = 'Надворі спекотно, не забудьте про воду та головний убір.';
+    }
+
+    // 5. Порада щодо прогулянки
+    if (w.precipitation == 0 && w.aqi < 4 && w.windSpeed < 10 && w.temperature > 0 && w.temperature < 30) {
+      s4 += ' Чудовий час для прогулянки!';
+    } else if (w.aqi >= 4 || w.windSpeed > 15 || w.precipitation > 2) {
+      s4 += ' Краще утриматися від довгих прогулянок.';
+    }
+
+    // Збираємо все в один гарний абзац
+    return '$s1 $s2 $s3 $s4';
   }
 
   Future<void> _fetchAiSummary() async {
@@ -306,32 +320,23 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Color> _getBackgroundColors() {
     if (_weather == null) return [Colors.blue.shade900, Colors.blue.shade400];
 
-    String part = _weather!.partOfDay;
+    int hour = _weather!.localTime.hour;
     String condition = _weather!.mainCondition.toLowerCase();
 
     List<Color> baseColors;
 
-    switch (part) {
-      case 'Світанок':
-      case 'Ранок':
-        baseColors = [Colors.deepOrange.shade800, Colors.orange.shade600];
-        break;
-      case 'Полудень':
-        baseColors = [Colors.blue.shade800, Colors.blue.shade500];
-        break;
-      case 'День':
-        baseColors = [Colors.lightBlue.shade400, Colors.lightBlue.shade100];
-        break;
-      case 'Вечір':
-        baseColors = [Colors.orange.shade600, Colors.orange.shade300];
-        break;
-      case 'Сутінки':
-        baseColors = [const Color(0xFF1A237E), const Color(0xFF6A1B9A)];
-        break;
-      case 'Ніч':
-      default:
-        baseColors = [const Color(0xFF1A1A1A), const Color(0xFF424242)];
-        break;
+    if (hour >= 4 && hour < 7) {
+      baseColors = [Colors.orangeAccent.shade200, Colors.yellow.shade700];
+    } else if (hour >= 7 && hour < 14) {
+      baseColors = [Colors.lightBlue.shade300, Colors.lightBlue.shade100];
+    } else if (hour >= 14 && hour < 17) {
+      baseColors = [Colors.orange.shade500, Colors.orange.shade300];
+    } else if (hour >= 17 && hour < 20) {
+      baseColors = [Colors.deepOrange.shade800, Colors.orange.shade600];
+    } else if (hour >= 20 && hour < 22) {
+      baseColors = [const Color(0xFF4A148C), const Color(0xFF7B1FA2)];
+    } else {
+      baseColors = [const Color(0xFF1A1A1A), const Color(0xFF424242)];
     }
 
     if (condition.contains('rain') ||
