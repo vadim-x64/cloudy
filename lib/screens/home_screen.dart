@@ -1049,7 +1049,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           fontStyle: FontStyle.italic,
                                           height: 1.4,
                                         ),
-                                        textAlign: TextAlign.center,
+                                        textAlign: TextAlign.start,
                                       ),
                                     ),
                                   ),
