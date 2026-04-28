@@ -7,6 +7,8 @@ class AiService {
   Future<String?> generateDynamicSummary(
       WeatherModel weather,
       String unitStr,
+      String tempStr,
+      String feelsLikeStr,
       ) async {
     try {
       final apiKey = dotenv.env['GEMINI_API_KEY'];
@@ -22,7 +24,7 @@ class AiService {
       змістовний прогноз погоди для міста ${weather.cityName} 
       українською мовою. Там треба показати час доби ${weather.partOfDay},
       поточний стан погоди ${weather.description}, температуру 
-      ${weather.temperature}$unitStr (відчувається як ${weather.feelsLike}$unitStr),
+      $tempStr$unitStr (відчувається як $feelsLikeStr$unitStr),
       швидкість і напрямок вітру ${weather.windSpeed} м/с й 
       км/год, чи будуть опади протягом 24 годин (доби) ${weather.precipitation} мм.
       

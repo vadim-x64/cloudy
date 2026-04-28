@@ -46,10 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ? '°C'
         : (_selectedUnit == TempUnit.fahrenheit ? '°F' : 'K');
 
-    // 1. Базове речення (Місто + поточний стан + температура)
     String s1 = 'У місті ${w.cityName} зараз $desc, температура $tempStr$unit (відчувається як $feelsStr$unit).';
 
-    // 2. Опади та вітер
     String s2 = 'Вітер ${w.windSpeed.toStringAsFixed(1)} м/с.';
     if (w.precipitation > 0) {
       s2 += ' Очікуються опади (${w.precipitation} мм).';
@@ -57,10 +55,8 @@ class _HomeScreenState extends State<HomeScreen> {
       s2 += ' Без значних опадів.';
     }
 
-    // 3. Якість повітря
     String s3 = w.aqi >= 4 ? 'Якість повітря погіршена.' : 'Повітря в нормі.';
 
-    // 4. Поради щодо одягу та парасолі
     String s4 = '';
     if (w.precipitation > 0) {
       s4 = 'Обов\'язково захопіть парасолю!';
@@ -74,14 +70,12 @@ class _HomeScreenState extends State<HomeScreen> {
       s4 = 'Надворі спекотно, не забудьте про воду та головний убір.';
     }
 
-    // 5. Порада щодо прогулянки
     if (w.precipitation == 0 && w.aqi < 4 && w.windSpeed < 10 && w.temperature > 0 && w.temperature < 30) {
       s4 += ' Чудовий час для прогулянки!';
     } else if (w.aqi >= 4 || w.windSpeed > 15 || w.precipitation > 2) {
       s4 += ' Краще утриматися від довгих прогулянок.';
     }
 
-    // Збираємо все в один гарний абзац
     return '$s1 $s2 $s3 $s4';
   }
 
@@ -97,7 +91,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ? '°C'
         : (_selectedUnit == TempUnit.fahrenheit ? '°F' : 'K');
 
-    final summary = await _aiService.generateDynamicSummary(_weather!, unitStr);
+    String tempStr = _formatTempOnlyNumber(_weather!.temperature);
+    String feelsStr = _formatTempOnlyNumber(_weather!.feelsLike);
+
+    final summary = await _aiService.generateDynamicSummary(
+      _weather!,
+      unitStr,
+      tempStr,
+      feelsStr,
+    );
 
     if (mounted) {
       setState(() {
@@ -138,15 +140,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic> _getAqiInfo(int aqi) {
     switch (aqi) {
       case 1:
-        return {'text': 'Відмінно', 'color': Colors.greenAccent};
+        return {'text': 'Відмінно', 'color': Color(0xFF00E676)};
       case 2:
-        return {'text': 'Добре', 'color': Colors.lightGreen};
+        return {'text': 'Добре', 'color': Color(0xFF76FF03)};
       case 3:
-        return {'text': 'Помірно', 'color': Colors.yellowAccent};
+        return {'text': 'Помірно', 'color': Color(0xFFFDD835)};
       case 4:
-        return {'text': 'Погано', 'color': Colors.orangeAccent};
+        return {'text': 'Погано', 'color': Color(0xFFF57F17)};
       case 5:
-        return {'text': 'Небезпечно', 'color': Colors.redAccent};
+        return {'text': 'Небезпечно', 'color': Color(0xFFE64A19)};
       default:
         return {'text': 'Невідомо', 'color': Colors.white};
     }
@@ -328,7 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (hour >= 4 && hour < 7) {
       baseColors = [Colors.orangeAccent.shade200, Colors.yellow.shade700];
     } else if (hour >= 7 && hour < 14) {
-      baseColors = [Colors.lightBlue.shade300, Colors.lightBlue.shade100];
+      baseColors = [Colors.lightBlue.shade500, Colors.lightBlue.shade300];
     } else if (hour >= 14 && hour < 17) {
       baseColors = [Colors.orange.shade500, Colors.orange.shade300];
     } else if (hour >= 17 && hour < 20) {
@@ -1044,9 +1046,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                           )
                                         ],
                                       )
-                                          : Text(
-                                        _aiSummary ?? _generateWeatherSummaryFallback(_weather!),
-                                        key: const ValueKey('text'),
+                                          : TypewriterText(
+                                        key: ValueKey(_aiSummary ?? 'text'),
+                                        text: _aiSummary ?? _generateWeatherSummaryFallback(_weather!),
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: Colors.white.withOpacity(0.85),
@@ -1343,7 +1345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                         ),
                                                       ),
                                                       SizedBox(
-                                                        width: 90,
+                                                        width: 120,
                                                         child: Row(
                                                           mainAxisAlignment:
                                                           MainAxisAlignment
@@ -1647,4 +1649,73 @@ class _TemperatureChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class TypewriterText extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+  final TextAlign textAlign;
+
+  const TypewriterText({
+    super.key,
+    required this.text,
+    required this.style,
+    this.textAlign = TextAlign.start,
+  });
+
+  @override
+  State<TypewriterText> createState() => _TypewriterTextState();
+}
+
+class _TypewriterTextState extends State<TypewriterText>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<int> _characterCount;
+
+  @override
+  void initState() {
+    super.initState();
+    int charCount = widget.text.characters.length;
+    _controller = AnimationController(
+      duration: Duration(milliseconds: charCount * 25),
+      vsync: this,
+    );
+    _characterCount = StepTween(begin: 0, end: charCount)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant TypewriterText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      int charCount = widget.text.characters.length;
+      _controller.duration = Duration(milliseconds: charCount * 25);
+      _characterCount = StepTween(begin: 0, end: charCount)
+          .animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _characterCount,
+      builder: (context, child) {
+        String visibleText =
+        widget.text.characters.take(_characterCount.value).toString();
+        return Text(
+          visibleText,
+          style: widget.style,
+          textAlign: widget.textAlign,
+        );
+      },
+    );
+  }
 }
