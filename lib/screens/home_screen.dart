@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
@@ -31,11 +32,23 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showDetails = false;
   String? _aiSummary;
   bool _isAiGenerating = false;
+  Timer? _clockTimer;
 
   @override
   void initState() {
     super.initState();
     _loadWeatherByLocation();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted && _weather != null) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
   }
 
   String _generateWeatherSummaryFallback(WeatherModel w) {
@@ -277,6 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
           pressure: weather.pressure,
           aqi: weather.aqi,
           localTime: weather.localTime,
+          timezoneOffset: weather.timezoneOffset,
           sunrise: weather.sunrise,
           sunset: weather.sunset,
           hourlyForecast: weather.hourlyForecast,
@@ -322,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Color> _getBackgroundColors() {
     if (_weather == null) return [Colors.blue.shade900, Colors.blue.shade400];
 
-    int hour = _weather!.localTime.hour;
+    int hour = _weather!.currentLocalTime.hour;
     String condition = _weather!.mainCondition.toLowerCase();
 
     List<Color> baseColors;
@@ -895,7 +909,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 Text(
                                                   DateFormat(
                                                     'HH:mm',
-                                                  ).format(_weather!.localTime),
+                                                  ).format(_weather!.currentLocalTime),
                                                   style: const TextStyle(
                                                     fontSize: 26,
                                                     fontWeight: FontWeight.bold,
@@ -906,7 +920,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  '${_getUkrainianWeekday(_weather!.localTime.weekday)}\n${DateFormat('d MMMM', 'uk_UA').format(_weather!.localTime)}',
+                                                  '${_getUkrainianWeekday(_weather!.currentLocalTime.weekday)}\n${DateFormat('d MMMM', 'uk_UA').format(_weather!.currentLocalTime)}',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     color: Colors.white

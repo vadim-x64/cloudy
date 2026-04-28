@@ -39,6 +39,7 @@ class WeatherModel {
   final int pressure;
   final int aqi;
   final DateTime localTime;
+  final int timezoneOffset;
   final DateTime sunrise;
   final DateTime sunset;
   final List<HourlyForecast> hourlyForecast;
@@ -59,11 +60,16 @@ class WeatherModel {
     required this.pressure,
     required this.aqi,
     required this.localTime,
+    required this.timezoneOffset,
     required this.sunrise,
     required this.sunset,
     required this.hourlyForecast,
     required this.dailyForecast,
   });
+
+  DateTime get currentLocalTime {
+    return DateTime.now().toUtc().add(Duration(seconds: timezoneOffset));
+  }
 
   factory WeatherModel.fromJson(
     Map<String, dynamic> currentJson,
@@ -178,6 +184,7 @@ class WeatherModel {
       pressure: currentJson['main']['pressure'] ?? 1013,
       aqi: parsedAqi,
       localTime: calcLocalTime,
+      timezoneOffset: timezoneOffset,
       sunrise: calcSunrise,
       sunset: calcSunset,
       hourlyForecast: hourly,
@@ -186,18 +193,18 @@ class WeatherModel {
   }
 
   bool get isDayTime {
-    return localTime.isAfter(sunrise) && localTime.isBefore(sunset);
+    return currentLocalTime.isAfter(sunrise) && currentLocalTime.isBefore(sunset);
   }
 
   String get partOfDay {
-    final double timeInHours = localTime.hour + (localTime.minute / 60.0);
+    final double timeInHours = currentLocalTime.hour + (currentLocalTime.minute / 60.0);
     final double sunriseTime = sunrise.hour + (sunrise.minute / 60.0);
     final double sunsetTime = sunset.hour + (sunset.minute / 60.0);
 
     if ((timeInHours - sunriseTime).abs() <= 1.0) return 'Світанок';
-    if (timeInHours > sunriseTime + 1.0 && localTime.hour < 12) return 'Ранок';
-    if (localTime.hour >= 12 && localTime.hour < 15) return 'День';
-    if (localTime.hour >= 15 && timeInHours < sunsetTime - 1.0) return 'Полудень';
+    if (timeInHours > sunriseTime + 1.0 && currentLocalTime.hour < 12) return 'Ранок';
+    if (currentLocalTime.hour >= 12 && currentLocalTime.hour < 15) return 'День';
+    if (currentLocalTime.hour >= 15 && timeInHours < sunsetTime - 1.0) return 'Полудень';
     if (timeInHours >= sunsetTime - 1.0 && timeInHours < sunsetTime + 0.5) return 'Вечір';
     if (timeInHours >= sunsetTime + 0.5 && timeInHours < sunsetTime + 1.5) return 'Сутінки';
 
