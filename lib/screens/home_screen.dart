@@ -352,18 +352,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     List<Color> baseColors;
 
-    if (hour >= 4 && hour < 7) {
-      baseColors = [Colors.orangeAccent.shade200, Colors.yellow.shade700];
-    } else if (hour >= 7 && hour < 14) {
-      baseColors = [Colors.lightBlue.shade500, Colors.lightBlue.shade300];
-    } else if (hour >= 14 && hour < 17) {
-      baseColors = [Colors.orange.shade500, Colors.orange.shade300];
-    } else if (hour >= 17 && hour < 20) {
-      baseColors = [Colors.deepOrange.shade800, Colors.orange.shade600];
-    } else if (hour >= 20 && hour < 22) {
-      baseColors = [const Color(0xFF4A148C), const Color(0xFF7B1FA2)];
+    if (hour >= 4 && hour < 8) {
+      baseColors = [Colors.deepOrange.shade500, Colors.orange.shade400];
+    } else if (hour >= 8 && hour < 12) {
+      baseColors = [Colors.green.shade600, Colors.lightGreen.shade400];
+    } else if (hour >= 12 && hour < 16) {
+      baseColors = [Colors.blue.shade600, Colors.lightBlue.shade400];
+    } else if (hour >= 16 && hour < 18) {
+      baseColors = [Colors.orange.shade600, Colors.amber.shade500];
+    } else if (hour >= 18 && hour < 22) {
+      baseColors = [Colors.deepOrange.shade900, Colors.deepOrange.shade700];
+    } else if (hour >= 22 && hour < 24) {
+      baseColors = [Colors.deepPurple.shade900, Colors.purple.shade900];
     } else {
-      baseColors = [const Color(0xFF1A1A1A), const Color(0xFF424242)];
+      baseColors = [Colors.grey.shade900, Colors.grey.shade500];
     }
 
     if (condition.contains('rain') ||
