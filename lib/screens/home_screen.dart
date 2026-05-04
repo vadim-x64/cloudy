@@ -359,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (hour >= 12 && hour < 16) {
       baseColors = [Colors.blue.shade700, Colors.lightBlue.shade500];
     } else if (hour >= 16 && hour < 18) {
-      baseColors = [Colors.orange.shade500, Colors.amber.shade400];
+      baseColors = [Colors.indigoAccent.shade700, Colors.blue.shade600];
     } else if (hour >= 18 && hour < 22) {
       baseColors = [Colors.deepOrange.shade900, Colors.deepOrange.shade700];
     } else if (hour >= 22 && hour < 24) {
@@ -370,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Color(0xFF3A0066)
       ];
     } else {
-      baseColors = [Colors.grey.shade900, Colors.grey.shade500];
+      baseColors = [Colors.grey.shade900, Colors.blueGrey.shade800];
     }
 
     if (condition.contains('rain') ||
