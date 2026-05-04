@@ -353,17 +353,22 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Color> baseColors;
 
     if (hour >= 4 && hour < 8) {
-      baseColors = [Colors.deepOrange.shade500, Colors.orange.shade400];
+      baseColors = [Colors.orange.shade900, Colors.orange.shade600];
     } else if (hour >= 8 && hour < 12) {
-      baseColors = [Colors.green.shade600, Colors.lightGreen.shade400];
+      baseColors = [Colors.lightGreenAccent.shade700, Colors.lightGreen.shade600];
     } else if (hour >= 12 && hour < 16) {
-      baseColors = [Colors.blue.shade600, Colors.lightBlue.shade400];
+      baseColors = [Colors.blue.shade700, Colors.lightBlue.shade500];
     } else if (hour >= 16 && hour < 18) {
-      baseColors = [Colors.orange.shade600, Colors.amber.shade500];
+      baseColors = [Colors.orange.shade500, Colors.amber.shade400];
     } else if (hour >= 18 && hour < 22) {
       baseColors = [Colors.deepOrange.shade900, Colors.deepOrange.shade700];
     } else if (hour >= 22 && hour < 24) {
-      baseColors = [Colors.deepPurple.shade900, Colors.purple.shade900];
+      baseColors = [
+        Color(0xFF14001F),
+        Color(0xFF14001F),
+        Color(0xFF3A0066),
+        Color(0xFF3A0066)
+      ];
     } else {
       baseColors = [Colors.grey.shade900, Colors.grey.shade500];
     }
