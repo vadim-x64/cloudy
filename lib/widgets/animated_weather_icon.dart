@@ -215,10 +215,10 @@ class WeatherIconPainter extends CustomPainter {
     if (!isPartial) {
       final starPaint = Paint()..style = PaintingStyle.fill;
 
-      final Random rand = Random(42);
-      for (int i = 0; i < 10; i++) {
+      final Random rand = Random(44);
+      for (int i = 0; i < 12; i++) {
         double sx = rand.nextDouble() * size.width;
-        double sy = rand.nextDouble() * size.height * 0.6;
+        double sy = rand.nextDouble() * size.height * 0.65;
         double opacity = (sin((animationValue * pi * 4) + i) + 1) / 2;
         starPaint.color = Colors.white.withOpacity(opacity * 0.8);
 
@@ -294,7 +294,7 @@ class WeatherIconPainter extends CustomPainter {
 
     canvas.save();
     canvas.translate(adjustedCenter.dx, adjustedCenter.dy);
-    canvas.rotate(animationValue * pi * 0.5 * (isSunset ? -1 : 1));
+    canvas.rotate(animationValue * pi * 0.5 * (isSunset ? 1 : -1));
 
     for (int i = 0; i < rayCount; i++) {
       canvas.rotate((2 * pi) / rayCount);
