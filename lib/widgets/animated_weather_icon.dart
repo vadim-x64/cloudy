@@ -214,42 +214,48 @@ class WeatherIconPainter extends CustomPainter {
 
     if (!isPartial) {
       final starPaint = Paint()..style = PaintingStyle.fill;
+      final Random rand = Random(62);
 
-      final Random rand = Random(44);
-      for (int i = 0; i < 12; i++) {
-        double sx = rand.nextDouble() * size.width;
-        double sy = rand.nextDouble() * size.height * 0.65;
-        double opacity = (sin((animationValue * pi * 4) + i) + 1) / 2;
-        starPaint.color = Colors.white.withOpacity(opacity * 0.8);
+      for (int i = 0; i < 10; i++) {
+        double sx = size.width * 0.05 + rand.nextDouble() * (size.width * 0.9);
+        double sy =
+            size.height * 0.05 + rand.nextDouble() * (size.height);
 
-        double starRadius = size.width * (0.02 + rand.nextDouble() * 0.015);
+        double opacity = (sin((animationValue * pi * 4) + i * 1.5) + 1) / 2;
+        starPaint.color = Colors.white.withOpacity(0.25 + opacity * 0.75);
+        double starRadius = size.width * (0.02 + rand.nextDouble() * 0.02);
+        double inner = starRadius * 0.25;
         Path starPath = Path();
         starPath.moveTo(sx, sy - starRadius);
-        starPath.quadraticBezierTo(sx, sy, sx + starRadius, sy);
-        starPath.quadraticBezierTo(sx, sy, sx, sy + starRadius);
-        starPath.quadraticBezierTo(sx, sy, sx - starRadius, sy);
-        starPath.quadraticBezierTo(sx, sy, sx, sy - starRadius);
+        starPath.quadraticBezierTo(sx + inner, sy - inner, sx + starRadius, sy);
+        starPath.quadraticBezierTo(sx + inner, sy + inner, sx, sy + starRadius);
+        starPath.quadraticBezierTo(sx - inner, sy + inner, sx - starRadius, sy);
+        starPath.quadraticBezierTo(sx - inner, sy - inner, sx, sy - starRadius);
         starPath.close();
-
         canvas.drawPath(starPath, starPaint);
       }
     }
 
     canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
+    double rockAngle = sin(animationValue * pi * 2) * 0.12;
+    canvas.save();
+    canvas.translate(moonCenter.dx, moonCenter.dy);
+    canvas.rotate(rockAngle);
 
     final moonPaint = Paint()..color = Colors.blueGrey.shade100;
-    canvas.drawCircle(moonCenter, radius, moonPaint);
+    canvas.drawCircle(Offset.zero, radius, moonPaint);
 
     final cutPaint = Paint()
       ..color = Colors.black
       ..blendMode = BlendMode.dstOut;
 
     canvas.drawCircle(
-      moonCenter + Offset(radius * 0.4, -radius * 0.3),
+      Offset(radius * 0.4, -radius * 0.3),
       radius * 0.9,
       cutPaint,
     );
 
+    canvas.restore();
     canvas.restore();
   }
 

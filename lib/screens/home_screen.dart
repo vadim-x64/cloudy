@@ -356,8 +356,7 @@ class _HomeScreenState extends State<HomeScreen> {
       baseColors = [Colors.orange.shade900, Colors.orange.shade600];
     } else if (hour >= 8 && hour < 12) {
       baseColors = [
-        // дуже темний глибокий зелений
-        Color(0xFF1F6F5E), // приглушений світліший
+        Color(0xFF1F6F5E),
         Colors.greenAccent.shade700,
       ];
     } else if (hour >= 12 && hour < 16) {
