@@ -72,13 +72,13 @@ class WeatherModel {
   }
 
   factory WeatherModel.fromJson(
-    Map<String, dynamic> currentJson,
-    Map<String, dynamic>? forecastJson,
-    Map<String, dynamic>? aqiJson,
-    String cityName,
-    String region,
-    String country,
-  ) {
+      Map<String, dynamic> currentJson,
+      Map<String, dynamic>? forecastJson,
+      Map<String, dynamic>? aqiJson,
+      String cityName,
+      String region,
+      String country,
+      ) {
     int timezoneOffset = currentJson['timezone'] ?? 0;
 
     DateTime calcLocalTime = DateTime.now().toUtc().add(
@@ -147,9 +147,9 @@ class WeatherModel {
             iconCode: icon.contains('d')
                 ? icon
                 : icon.replaceAll(
-                    'n',
-                    'd',
-                  ),
+              'n',
+              'd',
+            ),
           );
         } else {
           if (temp < dailyMap[dateKey]!.minTemp)
@@ -197,20 +197,22 @@ class WeatherModel {
   }
 
   String get partOfDay {
-    final double timeInHours = currentLocalTime.hour + (currentLocalTime.minute / 60.0);
-    final double sunriseTime = sunrise.hour + (sunrise.minute / 60.0);
-    final double sunsetTime = sunset.hour + (sunset.minute / 60.0);
+    final now = currentLocalTime;
+    final dawnStart = sunrise.subtract(const Duration(minutes: 45));
+    final morningStart = sunrise.add(const Duration(minutes: 45));
+    final eveningStart = sunset.subtract(const Duration(minutes: 60));
+    final duskEnd = sunset.add(const Duration(minutes: 45));
+    final int daylightMinutes = eveningStart.difference(morningStart).inMinutes;
+    final noonStart = morningStart.add(Duration(minutes: daylightMinutes ~/ 3));
+    final afternoonStart = morningStart.add(Duration(minutes: (daylightMinutes ~/ 3) * 2));
 
-    if ((timeInHours - sunriseTime).abs() <= 1.0) return 'Світанок';
-    if ((timeInHours - sunsetTime).abs() <= 1.0) return 'Вечір';
-
-    final int hour = currentLocalTime.hour;
-    if (hour >= 4 && hour < 8) return 'Світанок';
-    if (hour >= 8 && hour < 12) return 'Ранок';
-    if (hour >= 12 && hour < 16) return 'День';
-    if (hour >= 16 && hour < 18) return 'Полудень';
-    if (hour >= 18 && hour < 21) return 'Вечір';
-    if (hour >= 21 && hour < 24) return 'Сутінки';
+    if (now.isBefore(dawnStart)) return 'Ніч';
+    if (now.isBefore(morningStart)) return 'Світанок';
+    if (now.isBefore(noonStart)) return 'Ранок';
+    if (now.isBefore(afternoonStart)) return 'День';
+    if (now.isBefore(eveningStart)) return 'Полудень';
+    if (now.isBefore(sunset)) return 'Вечір';
+    if (now.isBefore(duskEnd)) return 'Сутінки';
     return 'Ніч';
   }
 }
@@ -231,10 +233,10 @@ class CitySuggestion {
   });
 
   factory CitySuggestion.fromJson(
-    Map<String, dynamic> json,
-    String translatedCountry,
-    String translatedRegion,
-  ) {
+      Map<String, dynamic> json,
+      String translatedCountry,
+      String translatedRegion,
+      ) {
     final localNames = json['local_names'] ?? {};
     final ukName = localNames['uk'] ?? json['name'];
 
