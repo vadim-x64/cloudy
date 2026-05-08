@@ -99,41 +99,27 @@ class WeatherIconPainter extends CustomPainter {
     final double center = size.width / 2;
     final Offset centerOffset = Offset(center, center);
 
-    bool isMorning = partOfDay == 'Світанок' || partOfDay == 'Ранок';
-    bool isEvening = partOfDay == 'Сутінки' || partOfDay == 'Вечір';
-    bool isNight = partOfDay == 'Ніч';
+    bool isSunrise = partOfDay == 'Світанок';
+    bool isSunset = partOfDay == 'Вечір';
+    bool isNightTime = partOfDay == 'Сутінки' || partOfDay == 'Ніч' || (!isDay && !isSunrise && !isSunset);
 
     if (type == WeatherType.clear || type == WeatherType.partlyCloudy) {
-      if (isMorning) {
-        _drawHorizonSun(
-          canvas,
-          size,
-          centerOffset,
-          isPartial: type == WeatherType.partlyCloudy,
-          isSunset: false,
-        );
-      } else if (isEvening) {
-        _drawHorizonSun(
-          canvas,
-          size,
-          centerOffset,
-          isPartial: type == WeatherType.partlyCloudy,
-          isSunset: true,
-        );
-      } else if (isNight || (partOfDay == null && !isDay)) {
-        _drawMoonAndStars(
-          canvas,
-          size,
-          centerOffset,
-          isPartial: type == WeatherType.partlyCloudy,
-        );
+      if (type == WeatherType.partlyCloudy) {
+        if (isNightTime) {
+          _drawMoonAndStars(canvas, size, centerOffset, isPartial: true);
+        } else {
+          _drawSun(canvas, size, centerOffset, isPartial: true);
+        }
       } else {
-        _drawSun(
-          canvas,
-          size,
-          centerOffset,
-          isPartial: type == WeatherType.partlyCloudy,
-        );
+        if (isSunrise) {
+          _drawHorizonSun(canvas, size, centerOffset, isPartial: false, isSunset: false);
+        } else if (isSunset) {
+          _drawHorizonSun(canvas, size, centerOffset, isPartial: false, isSunset: true);
+        } else if (isNightTime) {
+          _drawMoonAndStars(canvas, size, centerOffset, isPartial: false);
+        } else {
+          _drawSun(canvas, size, centerOffset, isPartial: false);
+        }
       }
     }
 

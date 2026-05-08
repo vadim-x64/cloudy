@@ -363,9 +363,9 @@ class _HomeScreenState extends State<HomeScreen> {
       baseColors = [Colors.blue.shade700, Colors.lightBlue.shade500];
     } else if (hour >= 16 && hour < 18) {
       baseColors = [Colors.indigoAccent.shade700, Colors.blue.shade600];
-    } else if (hour >= 18 && hour < 22) {
+    } else if (hour >= 18 && hour < 21) {
       baseColors = [Colors.deepOrange.shade900, Colors.deepOrange.shade700];
-    } else if (hour >= 22 && hour < 24) {
+    } else if (hour >= 21 && hour < 24) {
       baseColors = [
         Color(0xFF14001F),
         Color(0xFF14001F),
