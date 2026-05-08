@@ -371,8 +371,8 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Сутінки':
         baseColors = [
           const Color(0xFF14001F),
-          const Color(0xFF14001F),
-          const Color(0xFF3A0066),
+          const Color(0xFF310051),
+          const Color(0xFF320057),
           const Color(0xFF3A0066)
         ];
         break;
@@ -426,6 +426,8 @@ class _HomeScreenState extends State<HomeScreen> {
     double range = maxT - minT;
     double percent = ((tempC - minT) / range).clamp(0.0, 1.0);
 
+    Color thermoColor = tempC >= 10.0 ? Colors.redAccent.shade700 : Colors.blue.shade500;
+
     return SizedBox(
       height: 120,
       width: 45,
@@ -464,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 8,
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent.shade700,
+                      color: thermoColor,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -473,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.shade700,
+                    color: thermoColor,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white54, width: 1),
                   ),
@@ -1011,11 +1013,38 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ],
                                     ),
                                   ),
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 15),
+
+                                if (_weather!.aqi >= 4)
+                                  AnimatedEntrance(
+                                    delay: const Duration(milliseconds: 100),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 15),
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.redAccent.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 28),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              'Погана якість повітря! Рекомендується залишатися вдома та зачинити вікна.',
+                                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+
                                 AnimatedEntrance(
                                   delay: const Duration(milliseconds: 150),
                                   child: AnimatedWeatherIcon(
-                                    iconCode: _weather!.iconCode,
+                                    iconCode: _weather!.isDayTime ? '01d' : '01n',
                                     size: 160,
                                     partOfDay: _weather!.partOfDay,
                                   ),
@@ -1045,17 +1074,30 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 AnimatedEntrance(
                                   delay: const Duration(milliseconds: 250),
-                                  child: Text(
-                                    _cleanWeatherDescription(
-                                      _weather!.description,
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 22,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1.2,
-                                    ),
-                                    textAlign: TextAlign.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      AnimatedWeatherIcon(
+                                        iconCode: _weather!.iconCode,
+                                        size: 50,
+                                        partOfDay: _weather!.partOfDay,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Flexible(
+                                        child: Text(
+                                          _cleanWeatherDescription(
+                                            _weather!.description,
+                                          ),
+                                          style: const TextStyle(
+                                            fontSize: 22,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1.2,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: 12),
