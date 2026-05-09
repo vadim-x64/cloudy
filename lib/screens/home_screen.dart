@@ -1,15 +1,16 @@
 import 'dart:ui';
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:geolocator/geolocator.dart';
+
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../services/location_service.dart';
 import '../services/ai_service.dart';
 import '../widgets/animated_weather_icon.dart';
+import '../widgets/weather_overlays.dart';
 
 enum TempUnit { celsius, fahrenheit, kelvin }
 
@@ -35,8 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isAiGenerating = false;
   Timer? _clockTimer;
   int _lastMinute = DateTime.now().minute;
+
   bool _showTempAnimation = false;
-  bool _isColdAnimation = true;
 
   @override
   void initState() {
@@ -64,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_showTempAnimation || _weather == null) return;
 
     setState(() {
-      _isColdAnimation = _weather!.temperature < 15.0;
       _showTempAnimation = true;
     });
 
@@ -184,15 +184,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic> _getAqiInfo(int aqi) {
     switch (aqi) {
       case 1:
-        return {'text': 'Відмінно', 'color': Color(0xFF00E676)};
+        return {'text': 'Відмінно', 'color': const Color(0xFF00E676)};
       case 2:
-        return {'text': 'Добре', 'color': Color(0xFF76FF03)};
+        return {'text': 'Добре', 'color': const Color(0xFF76FF03)};
       case 3:
-        return {'text': 'Помірно', 'color': Color(0xFFFDD835)};
+        return {'text': 'Помірно', 'color': const Color(0xFFFDD835)};
       case 4:
-        return {'text': 'Погано', 'color': Color(0xFFF57F17)};
+        return {'text': 'Погано', 'color': const Color(0xFFF57F17)};
       case 5:
-        return {'text': 'Небезпечно', 'color': Color(0xFFE64A19)};
+        return {'text': 'Небезпечно', 'color': const Color(0xFFE64A19)};
       default:
         return {'text': 'Невідомо', 'color': Colors.white};
     }
@@ -820,6 +820,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 30),
+
                         if (_isLoading)
                           Padding(
                             padding: const EdgeInsets.only(top: 100),
@@ -1060,32 +1061,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
                                   ),
-
                                 AnimatedEntrance(
                                   delay: const Duration(milliseconds: 150),
                                   child: SizedBox(
                                     width: 160,
                                     height: 160,
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        AnimatedOpacity(
-                                          duration: const Duration(milliseconds: 300),
-                                          opacity: (_showTempAnimation && !_isColdAnimation) ? 0.0 : 1.0,
-                                          child: AnimatedWeatherIcon(
-                                            iconCode: _weather!.isDayTime ? '01d' : '01n',
-                                            size: 160,
-                                            partOfDay: _weather!.partOfDay,
-                                          ),
-                                        ),
-                                        if (_showTempAnimation && !_isColdAnimation)
-                                          const OverflowBox(
-                                            maxWidth: 400,
-                                            maxHeight: 400,
-                                            child: SunOverlayAnimation(),
-                                          ),
-                                      ],
+                                    child: AnimatedWeatherIcon(
+                                      iconCode: _weather!.isDayTime ? '01d' : '01n',
+                                      size: 160,
+                                      partOfDay: _weather!.partOfDay,
                                     ),
                                   ),
                                 ),
@@ -1558,10 +1542,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            if (_showTempAnimation && _isColdAnimation)
+            if (_showTempAnimation && _weather != null)
               Positioned.fill(
                 child: IgnorePointer(
-                  child: const SnowOverlayAnimation(),
+                  child: WeatherOverlayManager(iconCode: _weather!.iconCode),
                 ),
               ),
           ],
@@ -1880,141 +1864,6 @@ class _TypewriterTextState extends State<TypewriterText>
           textAlign: widget.textAlign,
         );
       },
-    );
-  }
-}
-
-class SnowOverlayAnimation extends StatefulWidget {
-  const SnowOverlayAnimation({super.key});
-
-  @override
-  State<SnowOverlayAnimation> createState() => _SnowOverlayAnimationState();
-}
-
-class _SnowOverlayAnimationState extends State<SnowOverlayAnimation> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 3))..forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: TweenSequence<double>([
-        TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 15),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 70),
-        TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 15),
-      ]).animate(_controller),
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) => CustomPaint(
-          painter: _FullScreenSnowPainter(_controller.value),
-          size: Size.infinite,
-        ),
-      ),
-    );
-  }
-}
-
-class _FullScreenSnowPainter extends CustomPainter {
-  final double progress;
-  _FullScreenSnowPainter(this.progress);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    final rand = math.Random(42);
-
-    for (int i = 0; i < 70; i++) {
-      double startX = rand.nextDouble() * size.width;
-      double speedY = rand.nextDouble() * 2 + 1.0;
-      double startY = rand.nextDouble() * size.height;
-      double y = (startY + (progress * 3 * speedY * size.height * 0.4)) % size.height;
-      double wobble = math.sin((progress * math.pi * 8) + i) * 20;
-      double sizeFlake = rand.nextDouble() * 4 + 2;
-
-      canvas.drawCircle(
-          Offset(startX + wobble, y),
-          sizeFlake,
-          paint..color = Colors.white.withOpacity(rand.nextDouble() * 0.5 + 0.5)
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _FullScreenSnowPainter oldDelegate) => true;
-}
-
-class SunOverlayAnimation extends StatefulWidget {
-  const SunOverlayAnimation({super.key});
-
-  @override
-  State<SunOverlayAnimation> createState() => _SunOverlayAnimationState();
-}
-
-class _SunOverlayAnimationState extends State<SunOverlayAnimation> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 3))..forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: TweenSequence<double>([
-        TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 15),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 65),
-        TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 20),
-      ]).animate(_controller),
-      child: ScaleTransition(
-        scale: TweenSequence<double>([
-          TweenSequenceItem(tween: Tween(begin: 0.5, end: 1.15).chain(CurveTween(curve: Curves.easeOutBack)), weight: 20),
-          TweenSequenceItem(tween: Tween(begin: 1.15, end: 1.25), weight: 60),
-          TweenSequenceItem(tween: Tween(begin: 1.25, end: 0.0).chain(CurveTween(curve: Curves.easeInBack)), weight: 20),
-        ]).animate(_controller),
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Transform.rotate(
-              angle: _controller.value * math.pi * 1.5,
-              child: child,
-            );
-          },
-          child: Container(
-            width: 220,
-            height: 220,
-            decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.orangeAccent.withOpacity(0.5),
-                    blurRadius: 60,
-                    spreadRadius: 20,
-                  )
-                ]
-            ),
-            child: const Icon(Icons.wb_sunny, size: 180, color: Colors.amber),
-          ),
-        ),
-      ),
     );
   }
 }
