@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/weather_model.dart';
 
@@ -11,22 +12,26 @@ class AiService {
     String feelsLikeStr,
   ) async {
     try {
-      final apiKey = dotenv.env['GEMINI_API_KEY'];
+      final apiKey = dotenv.env['GROK_API_KEY'];
 
       if (apiKey == null || apiKey.trim().isEmpty) {
-        return 'Помилка доступу до ШІ.';
+        return 'Помилка доступу до ШІ (ключ не знайдено).';
       }
 
-      final prompt =
+      final systemPrompt =
           '''
-      ШІ, на зв'язку! Короче є до тебе таке завдання невеличке. Уяви, що ти 
-      працюєш метеорологом і твоя задача надавати користувачу додатку інформацію про
-      погодний стан на місцевості. Отже справа твоя - це написати один 
-      суцільний абзац тексту до 5 зв'язних речень із внятним, чітким, 
-      обгрунтованим та змістовним прогнозом погоди для міста 
-      ${weather.cityName} українською мовою. Описуй своїми словами поточну 
-      погоду ${weather.description} для поточного часу доби 
-      ${weather.partOfDay}. Обов'язково вкажи наявну температуру 
+        ШІ, на зв'язку! Короче є до тебе таке завдання. Уяви, що ти 
+        працюєш метеорологом і твоя задача надавати користувачу інформацію про
+        погодний стан на місцевості в реальному часі. Отже справа твоя - це 
+        видати 1 суцільний абзац тексту до 5 зв'язних речень із внятним, чітким, 
+        обгрунтованим та змістовним прогнозом погоди для міста 
+        ${weather.cityName} українською мовою.
+      ''';
+
+      final userPrompt =
+          '''
+      Описуй своїми словами поточну погоду ${weather.description} для поточного 
+      часу доби ${weather.partOfDay}. Обов'язково вкажи наявну температуру 
       $tempStr$unitStr і як її відчувається $feelsLikeStr$unitStr, швидкість і 
       напрямок вітру ${weather.windSpeed} м/с (можеш також вказувати значення 
       і в км/год) та очікувану кількість опадів протягом доби 
@@ -40,56 +45,108 @@ class AiService {
       побажання відповідно до часу доби ${weather.partOfDay} або передбачення.
       ''';
 
-      final content = [Content.text(prompt)];
+      final isGroq = apiKey.trim().startsWith('gsk_');
 
-      final modelsToTry = [
-        'gemini-2.5-flash',
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-      ];
+      final url = isGroq
+          ? Uri.parse('https://api.groq.com/openai/v1/chat/completions')
+          : Uri.parse('https://api.x.ai/v1/chat/completions');
+
+      List<String> modelsToTry = [];
+
+      if (isGroq) {
+        modelsToTry = [
+          'llama-3.3-70b-versatile',
+          'llama-3.1-8b-instant',
+          'gemma2-9b-it',
+          'llama-3.2-3b-preview',
+          'llama-3.2-1b-preview',
+        ];
+        print(
+          'Виявлено ключ Groq (gsk_). Використовуємо API Groq замість xAI.',
+        );
+      } else {
+        try {
+          final modelsUrl = Uri.parse('https://api.x.ai/v1/models');
+          final modelsRes = await http
+              .get(modelsUrl, headers: {'Authorization': 'Bearer $apiKey'})
+              .timeout(const Duration(seconds: 10));
+
+          if (modelsRes.statusCode == 200) {
+            final data = jsonDecode(modelsRes.body);
+            final List modelsList = data['data'] ?? [];
+
+            modelsToTry = modelsList
+                .map((m) => m['id'].toString())
+                .where(
+                  (id) => id.contains('grok'),
+                )
+                .toList();
+
+            print('Доступні моделі xAI для твого ключа: $modelsToTry');
+          } else {
+            print(
+              'Не вдалося динамічно отримати список моделей. Статус: ${modelsRes.statusCode}',
+            );
+          }
+        } catch (e) {
+          print('Помилка при отриманні списку моделей: $e');
+        }
+
+        if (modelsToTry.isEmpty) {
+          modelsToTry = ['grok-2-latest', 'grok-beta', 'grok-2'];
+        }
+      }
 
       String lastError = '';
 
       for (final modelName in modelsToTry) {
         try {
-          final model = GenerativeModel(
-            model: modelName,
-            apiKey: apiKey,
-            generationConfig: GenerationConfig(
-              temperature: 0.7,
-              maxOutputTokens: 8192,
-            ),
-            safetySettings: [
-              SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
-              SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
-              SafetySetting(
-                HarmCategory.sexuallyExplicit,
-                HarmBlockThreshold.none,
-              ),
-              SafetySetting(
-                HarmCategory.dangerousContent,
-                HarmBlockThreshold.none,
-              ),
-            ],
-          );
-
-          final response = await model
-              .generateContent(content)
+          final response = await http
+              .post(
+                url,
+                headers: {
+                  'Content-Type': 'application/json; charset=utf-8',
+                  'Authorization': 'Bearer $apiKey',
+                },
+                body: jsonEncode({
+                  'model': modelName,
+                  'messages': [
+                    {'role': 'system', 'content': systemPrompt},
+                    {'role': 'user', 'content': userPrompt},
+                  ],
+                  'temperature': 0.7,
+                  'stream': false,
+                }),
+              )
               .timeout(const Duration(seconds: 15));
-          final result = response.text?.trim();
 
-          if (result != null && result.isNotEmpty) {
+          if (response.statusCode == 200) {
+            final responseBody = utf8.decode(response.bodyBytes);
+            final data = jsonDecode(responseBody);
+
+            final result = data['choices'][0]['message']['content']
+                .toString()
+                .trim();
+            print('Успішно використано модель: $modelName');
             return result.replaceAll('**', '').replaceAll('*', '');
+          } else {
+            lastError =
+                'Помилка $modelName: ${response.statusCode} - ${response.body}';
+            print(lastError);
+
+            if (response.statusCode == 401 || response.statusCode == 403) {
+              return 'Помилка авторизації. Перевір GROK_API_KEY.';
+            }
           }
         } on TimeoutException {
-          lastError = 'Таймаут відповіді для $modelName';
+          print('Таймаут для моделі $modelName');
         } catch (e) {
-          lastError = e.toString();
+          print('Помилка при запиті до $modelName: $e');
         }
       }
       return null;
     } catch (e) {
+      print('Загальна помилка AiService: $e');
       return null;
     }
   }
