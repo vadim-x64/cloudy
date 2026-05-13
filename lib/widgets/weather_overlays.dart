@@ -1,3 +1,5 @@
+// ===== weather_overlays.dart =====
+
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
@@ -174,7 +176,7 @@ class _CloudPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final cloudColor = isNight
-        ? Colors.blueGrey.shade700.withOpacity(0.8)
+        ? Colors.blueGrey.shade400.withOpacity(0.85)
         : Colors.white.withOpacity(0.9);
 
     final paint = Paint()..color = cloudColor;
@@ -307,27 +309,34 @@ class _FogPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.15)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 80);
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(
+        BlurStyle.normal,
+        1,
+      );
 
-    double moveX1 = math.sin(progress * math.pi) * 50;
-    double moveX2 = math.cos(progress * math.pi) * 60;
+    for (int i = 0; i < 4; i++) {
+      double yBase =
+          size.height * (0.2 + i * 0.2);
+      double phase =
+          (progress * math.pi * 2) +
+          (i * 1.5);
+      double amplitude = 20.0 + (i * 5.0);
+      double frequency = 0.008 + (i * 0.002);
 
-    canvas.drawCircle(
-      Offset(size.width * 0.2 + moveX1, size.height * 0.8),
-      size.width * 0.6,
-      paint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.8 - moveX2, size.height * 0.7),
-      size.width * 0.7,
-      paint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.5 + moveX1 * 0.5, size.height * 0.9),
-      size.width * 0.5,
-      paint,
-    );
+      Path path = Path();
+      path.moveTo(-50, yBase + math.sin(phase) * amplitude);
+
+      for (double x = 0; x <= size.width + 50; x += 20) {
+        double y = yBase + math.sin((x * frequency) + phase) * amplitude;
+        path.lineTo(x, y);
+      }
+
+      paint.strokeWidth = 40.0 + (i * 15.0);
+      paint.color = Colors.white.withOpacity(0.2 + (i % 2) * 0.15);
+      canvas.drawPath(path, paint);
+    }
   }
 
   @override
