@@ -10,38 +10,46 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _logoController;
+  late AnimationController _controller;
   late Animation<double> _logoScale;
   late Animation<double> _logoOpacity;
-  late Animation<double> _logoMove;
+  late Animation<double> _textOpacity;
+  late Animation<double> _textMove;
 
   @override
   void initState() {
     super.initState();
 
-    _logoController = AnimationController(
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2500),
     );
 
     _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _logoController,
+        parent: _controller,
         curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
       ),
     );
 
-    _logoScale = Tween<double>(begin: 0.5, end: 1.0).animate(
+    _logoScale = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(
-        parent: _logoController,
-        curve: const Interval(0.0, 0.7, curve: Curves.easeOutBack),
+        parent: _controller,
+        curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
       ),
     );
 
-    _logoMove = Tween<double>(begin: 40.0, end: 0.0).animate(
+    _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _logoController,
-        curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
+        parent: _controller,
+        curve: const Interval(0.3, 0.9, curve: Curves.easeIn),
+      ),
+    );
+
+    _textMove = Tween<double>(begin: 30.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.3, 0.9, curve: Curves.easeOutCubic),
       ),
     );
 
@@ -49,14 +57,14 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _startAnimations() async {
-    _logoController.forward();
+    _controller.forward();
 
-    await Future.delayed(const Duration(milliseconds: 2500));
+    await Future.delayed(const Duration(milliseconds: 3200));
 
     if (mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 800),
+          transitionDuration: const Duration(milliseconds: 1000),
           pageBuilder: (_, __, ___) => const HomeScreen(),
           transitionsBuilder: (_, animation, __, child) {
             return FadeTransition(opacity: animation, child: child);
@@ -68,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _logoController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -81,20 +89,46 @@ class _SplashScreenState extends State<SplashScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AnimatedBuilder(
-              animation: _logoController,
+              animation: _controller,
               builder: (context, child) {
                 return Opacity(
                   opacity: _logoOpacity.value,
-                  child: Transform.translate(
-                    offset: Offset(0, _logoMove.value),
-                    child: Transform.scale(
-                      scale: _logoScale.value,
-                      child: child,
-                    ),
+                  child: Transform.scale(
+                    scale: _logoScale.value,
+                    child: child,
                   ),
                 );
               },
               child: Image.asset('assets/logo.png', width: 400, height: 400),
+            ),
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _textOpacity.value,
+                  child: Transform.translate(
+
+                    offset: Offset(0, _textMove.value - 100),
+                    child: child,
+                  ),
+                );
+              },
+              child: const Text(
+                'Cloudy',
+                style: TextStyle(
+                  fontSize: 52,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 3.0,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    )
+                  ],
+                ),
+              ),
             ),
           ],
         ),
