@@ -208,6 +208,8 @@ class WeatherService {
       throw Exception('no_internet');
     } on TimeoutException {
       throw Exception('weak_signal');
+    } on http.ClientException {
+      throw Exception('dropped_connection');
     } catch (e) {
       if (e.toString().contains('SocketException')) {
         throw Exception('no_internet');

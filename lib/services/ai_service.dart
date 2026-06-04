@@ -22,27 +22,12 @@ class AiService {
           '''
         ШІ, на зв'язку! Короче є до тебе таке завдання. Уяви, що ти 
         працюєш метеорологом і твоя задача надавати користувачу інформацію про
-        погодний стан на місцевості в реальному часі. Отже справа твоя - це 
-        видати 1 суцільний абзац тексту до 5 зв'язних речень із внятним, чітким, 
-        обгрунтованим та змістовним прогнозом погоди для міста 
-        ${weather.cityName} українською мовою.
-      ''';
-
-      final userPrompt =
-          '''
-      Описуй своїми словами поточну погоду ${weather.description} для поточного 
-      часу доби ${weather.partOfDay}. Обов'язково вкажи наявну температуру 
-      $tempStr$unitStr і як її відчувається $feelsLikeStr$unitStr, швидкість і 
-      напрямок вітру ${weather.windSpeed} м/с (можеш також вказувати значення 
-      і в км/год) та очікувану кількість опадів протягом доби 
-      ${weather.precipitation} мм. Усі числові значення залишай цифрами. Пиши 
-      по суті та нормально, як реальна людина, без використання маркдауну,
-      списків, зірочок та жирного шрифту. На основі цих погодних даних давай 
-      коротку пораду людині щодо того як вдягнутися наприклад, або чи взяти 
-      парасолю, або чи варто тепліше одягнутися, або чи гарний зараз 
-      час для прогулянки і тому подібне. Текст має завершуватися логічною
-      думкою з крапкою, де останнє речення - це буде виключно коротке 
-      побажання відповідно до часу доби ${weather.partOfDay} або передбачення.
+        погодний стан на місцевості в реальному часі ( ${weather.cityName},
+        ${weather.description}, ${weather.partOfDay}, $tempStr$unitStr, 
+        $feelsLikeStr$unitStr, ${weather.windSpeed}, ${weather.precipitation}. 
+        Отже справа твоя - це видати 1 суцільний абзац тексту до 5 зв'язних 
+        речень із внятним, чітким, обгрунтованим, чистим та змістовним 
+        прогнозом погоди для міста українською мовою.
       ''';
 
       final isGroq = apiKey.trim().startsWith('gsk_');
@@ -111,14 +96,12 @@ class AiService {
                 body: jsonEncode({
                   'model': modelName,
                   'messages': [
-                    {'role': 'system', 'content': systemPrompt},
-                    {'role': 'user', 'content': userPrompt},
+                    {'role': 'system', 'content': systemPrompt}
                   ],
                   'temperature': 0.7,
                   'stream': false,
                 }),
-              )
-              .timeout(const Duration(seconds: 15));
+              ).timeout(const Duration(seconds: 15));
 
           if (response.statusCode == 200) {
             final responseBody = utf8.decode(response.bodyBytes);

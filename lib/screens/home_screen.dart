@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:geolocator/geolocator.dart';
-
+import '../widgets/dynamic_loader.dart';
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../services/location_service.dart';
@@ -209,6 +209,11 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _errorMessage =
         'Ваше інтернет-з\'єднання нестабільне.\nДані завантажуються занадто довго.';
+      });
+    } else if (errorMsg.contains('dropped_connection')) {
+      setState(() {
+        _errorMessage =
+        'З\'єднання обірвалось під час завантаження.\nСпробуйте оновити дані ще раз.';
       });
     } else {
       setState(() => _errorMessage = 'Сталася помилка: $e');
@@ -826,10 +831,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.only(top: 100),
                             child: Column(
                               children: [
-                                const CircularProgressIndicator(
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(height: 20),
+                                const DynamicLoader(size: 75),
+                                const SizedBox(height: 25),
                                 const Text(
                                   'Чекайте хвильку, отримуємо дані...',
                                   style: TextStyle(
