@@ -403,7 +403,12 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 'Ніч':
       default:
-        baseColors = [Colors.grey.shade900, Colors.blueGrey.shade800];
+      baseColors = [
+        const Color(0xFF050314),
+        const Color(0xFF10092B),
+        const Color(0xFF0B1736),
+        const Color(0xFF0A1B3F),
+      ];
         break;
     }
 

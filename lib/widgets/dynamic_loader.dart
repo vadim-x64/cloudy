@@ -87,8 +87,8 @@ class _LiquidGlossyPainter extends CustomPainter {
         end: Alignment.bottomRight,
         colors: [
           Colors.white,
-          Colors.lightBlue.shade300,
-          Colors.blueGrey.shade400,
+          Colors.grey.shade300,
+          Colors.grey.shade300,
         ],
         stops: const [0.1, 0.5, 0.9],
         transform: GradientRotation(progress * math.pi * 2),

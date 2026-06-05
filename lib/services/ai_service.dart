@@ -15,19 +15,18 @@ class AiService {
       final apiKey = dotenv.env['GROK_API_KEY'];
 
       if (apiKey == null || apiKey.trim().isEmpty) {
-        return 'Помилка доступу до ШІ (ключ не знайдено).';
+        return 'Помилка доступу до ШІ.';
       }
 
       final systemPrompt =
           '''
-        ШІ, на зв'язку! Короче є до тебе таке завдання. Уяви, що ти 
-        працюєш метеорологом і твоя задача надавати користувачу інформацію про
-        погодний стан на місцевості в реальному часі ( ${weather.cityName},
-        ${weather.description}, ${weather.partOfDay}, $tempStr$unitStr, 
-        $feelsLikeStr$unitStr, ${weather.windSpeed}, ${weather.precipitation}. 
-        Отже справа твоя - це видати 1 суцільний абзац тексту до 5 зв'язних 
-        речень із внятним, чітким, обгрунтованим, чистим та змістовним 
-        прогнозом погоди для міста українською мовою.
+        ШІ. Мені треба щоб ти надавав користувачам інформацію щодо погодних
+        умов на місцевості у реальному часі з такими параметрами як:
+        ${weather.cityName}, ${weather.description}, ${weather.partOfDay}, 
+        $tempStr$unitStr, $feelsLikeStr$unitStr, ${weather.windSpeed} 
+        (швидкість вітру), ${weather.precipitation}. Отже твоя задача проста -
+        написати один суцільний абзац тексту до 5 зв'язних речень із внятним, 
+        чітким, обгрунтованим та змістовним прогнозом погоди українською мовою.
       ''';
 
       final isGroq = apiKey.trim().startsWith('gsk_');
@@ -47,7 +46,7 @@ class AiService {
           'llama-3.2-1b-preview',
         ];
         print(
-          'Виявлено ключ Groq (gsk_). Використовуємо API Groq замість xAI.',
+          'Виявлено ключ. Використовуємо API Groq замість xAI.',
         );
       } else {
         try {
