@@ -898,121 +898,102 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 AnimatedEntrance(
                                   delay: const Duration(milliseconds: 0),
-                                  child: IntrinsicHeight(
+                                  child: _buildGlassContainer(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 18,
+                                      horizontal: 20,
+                                    ),
                                     child: Row(
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
                                       children: [
-                                        Expanded(
-                                          child: _buildGlassContainer(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 16,
-                                              horizontal: 10,
-                                            ),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                              children: [
-                                                const Icon(
-                                                  Icons.location_on_outlined,
-                                                  color: Colors.white,
-                                                  size: 28,
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Text(
-                                                  _weather!.cityName,
-                                                  style: const TextStyle(
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.white,
-                                                    height: 1.2,
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                  maxLines: 2,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  '${_weather!.region.isNotEmpty ? '${_weather!.region}\n' : ''}${_weather!.country}',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.white
-                                                        .withOpacity(0.9),
-                                                    fontWeight: FontWeight.w500,
-                                                    height: 1.2,
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                  maxLines: 2,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ),
+                                        Text(
+                                          DateFormat('HH:mm').format(
+                                            _weather!.currentLocalTime,
+                                          ),
+                                          style: const TextStyle(
+                                            fontSize: 48,
+                                            fontWeight: FontWeight.w300,
+                                            color: Colors.white,
+                                            height: 1.0,
                                           ),
                                         ),
-                                        const SizedBox(width: 15),
+                                        const SizedBox(width: 20),
+                                        Container(
+                                          width: 1,
+                                          height: 60,
+                                          color: Colors.white.withOpacity(0.3),
+                                        ),
+                                        const SizedBox(width: 20),
                                         Expanded(
-                                          child: _buildGlassContainer(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 16,
-                                              horizontal: 10,
-                                            ),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                              children: [
-                                                const Icon(
-                                                  Icons.schedule,
-                                                  color: Colors.white,
-                                                  size: 28,
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Text(
-                                                  DateFormat('HH:mm').format(
-                                                    _weather!.currentLocalTime,
-                                                  ),
-                                                  style: const TextStyle(
-                                                    fontSize: 26,
-                                                    fontWeight: FontWeight.bold,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.location_on,
                                                     color: Colors.white,
-                                                    height: 1.1,
+                                                    size: 18,
                                                   ),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  '${_getUkrainianWeekday(_weather!.currentLocalTime.weekday)}\n${DateFormat('dd.MM.yyyy').format(_weather!.currentLocalTime)}',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.white
-                                                        .withOpacity(0.9),
-                                                    fontWeight: FontWeight.w500,
-                                                    height: 1.2,
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                                const SizedBox(height: 6),
-                                                Container(
-                                                  padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white
-                                                        .withOpacity(0.2),
-                                                    borderRadius:
-                                                    BorderRadius.circular(10),
-                                                  ),
-                                                  child: Text(
-                                                    _weather!.partOfDay,
-                                                    style: const TextStyle(
-                                                      fontSize: 10,
-                                                      color: Colors.white,
+                                                  const SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      _weather!.cityName,
+                                                      style: const TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                      TextOverflow.ellipsis,
                                                     ),
                                                   ),
+                                                ],
+                                              ),
+                                              Text(
+                                                '${_weather!.region.isNotEmpty ? '${_weather!.region}, ' : ''}${_weather!.country}',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.white.withOpacity(0.8),
+                                                  fontWeight: FontWeight.w500,
                                                 ),
-                                              ],
-                                            ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                '${DateFormat('dd.MM.yyyy').format(_weather!.currentLocalTime)} • ${_getUkrainianWeekday(_weather!.currentLocalTime.weekday)}',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.white.withOpacity(0.9),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white
+                                                      .withOpacity(0.2),
+                                                  borderRadius:
+                                                  BorderRadius.circular(10),
+                                                ),
+                                                child: Text(
+                                                  _weather!.partOfDay,
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
