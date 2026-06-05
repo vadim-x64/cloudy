@@ -1,12 +1,11 @@
-// ===== weather_overlays.dart =====
-
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 class WeatherOverlayManager extends StatefulWidget {
   final String iconCode;
+  final String partOfDay;
 
-  const WeatherOverlayManager({super.key, required this.iconCode});
+  const WeatherOverlayManager({super.key, required this.iconCode, required this.partOfDay});
 
   @override
   State<WeatherOverlayManager> createState() => _WeatherOverlayManagerState();
@@ -44,7 +43,7 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
         animation: _controller,
         builder: (context, _) {
           return CustomPaint(
-            painter: _getPainterForWeather(widget.iconCode, _controller.value),
+            painter: _getPainterForWeather(widget.iconCode, _controller.value, widget.partOfDay),
             size: Size.infinite,
           );
         },
@@ -52,8 +51,11 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
     );
   }
 
-  CustomPainter _getPainterForWeather(String iconCode, double progress) {
+  CustomPainter _getPainterForWeather(String iconCode, double progress, String partOfDay) {
     if (iconCode.startsWith('01')) {
+      if (partOfDay == 'Світанок' || partOfDay == 'Вечір') {
+        return _HorizonSunPainter(progress, isSunset: partOfDay == 'Вечір');
+      }
       return iconCode.contains('d')
           ? _SunPainter(progress)
           : _MoonPainter(progress);
@@ -73,6 +75,70 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
 
     return _SunPainter(progress);
   }
+}
+
+class _HorizonSunPainter extends CustomPainter {
+  final double progress;
+  final bool isSunset;
+
+  _HorizonSunPainter(this.progress, {required this.isSunset});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2.5);
+    final scale = 1.0 + math.sin(progress * math.pi) * 0.2;
+    final baseRadius = size.width * 0.25 * scale;
+
+    final sunColor = isSunset ? Colors.deepOrangeAccent : Colors.amber;
+    final glowColor = isSunset ? Colors.deepOrange : Colors.orangeAccent;
+
+    final horizonY = center.dy + baseRadius * 0.2;
+
+    canvas.save();
+    canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY));
+
+    final glowPaint = Paint()
+      ..color = glowColor.withOpacity(0.4)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 40);
+    canvas.drawCircle(center, baseRadius * 1.5, glowPaint);
+
+    final sunPaint = Paint()..color = sunColor;
+    canvas.drawCircle(center, baseRadius, sunPaint);
+
+    final rayPaint = Paint()
+      ..color = sunColor
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round;
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(progress * math.pi * 0.5 * (isSunset ? 1 : -1));
+
+    for (int i = 0; i < 8; i++) {
+      canvas.rotate((2 * math.pi) / 8);
+      canvas.drawLine(
+        Offset(0, baseRadius + 15),
+        Offset(0, baseRadius + 45),
+        rayPaint,
+      );
+    }
+    canvas.restore();
+    canvas.restore();
+
+    final horizonPaint = Paint()
+      ..color = sunColor.withOpacity(0.8)
+      ..strokeWidth = size.width * 0.02
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+      Offset(center.dx - baseRadius * 1.8, horizonY),
+      Offset(center.dx + baseRadius * 1.8, horizonY),
+      horizonPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _HorizonSunPainter oldDelegate) => true;
 }
 
 class _SunPainter extends CustomPainter {
@@ -175,13 +241,9 @@ class _CloudPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cloudColor = isNight
-        ? Colors.blueGrey.shade400.withOpacity(0.85)
-        : Colors.white.withOpacity(0.9);
+    final paint = Paint();
 
-    final paint = Paint()..color = cloudColor;
-
-    void drawCloud(double x, double y, double scale) {
+    void drawCloud(double x, double y, double scale, double opacity) {
       canvas.save();
       canvas.translate(x, y);
       canvas.scale(scale);
@@ -199,17 +261,27 @@ class _CloudPainter extends CustomPainter {
       canvas.drawPath(
         path,
         Paint()
-          ..color = Colors.black12
+          ..color = Colors.black12.withOpacity(0.1 * opacity)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
       );
-      canvas.drawPath(path, paint);
+
+      canvas.drawPath(
+        path,
+        paint..color = Colors.white.withOpacity(0.9 * opacity),
+      );
       canvas.restore();
     }
 
-    double moveX = progress * size.width * 0.5;
-    drawCloud(size.width * 0.2 + moveX, size.height * 0.2, 1.5);
-    drawCloud(size.width * 0.8 - moveX * 0.5, size.height * 0.4, 1.2);
-    drawCloud(size.width * 0.1 + moveX * 1.2, size.height * 0.6, 1.8);
+    double fade = math.sin(progress * math.pi);
+    double moveX = progress * size.width * 0.4;
+
+    double floatY1 = math.sin(progress * math.pi * 2) * 15;
+    double floatY2 = math.cos(progress * math.pi * 2) * 20;
+    double floatY3 = math.sin(progress * math.pi * 2 + math.pi / 4) * 12;
+
+    drawCloud(size.width * 0.15 + moveX, size.height * 0.25 + floatY1, 1.3, fade * 0.8);
+    drawCloud(size.width * 0.85 - moveX * 1.2, size.height * 0.45 + floatY2, 1.1, fade);
+    drawCloud(size.width * 0.05 + moveX * 1.5, size.height * 0.65 + floatY3, 1.7, fade * 0.9);
   }
 
   @override

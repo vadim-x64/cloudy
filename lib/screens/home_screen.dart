@@ -38,6 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _lastMinute = DateTime.now().minute;
 
   bool _showTempAnimation = false;
+  bool _isUsingGps = true;
+  CitySuggestion? _currentSuggestion;
 
   @override
   void initState() {
@@ -46,13 +48,72 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted && _weather != null) {
-        final currentMinute = DateTime.now().minute;
+        final now = DateTime.now();
+        final currentMinute = now.minute;
+
         if (_lastMinute != currentMinute) {
           _lastMinute = currentMinute;
           setState(() {});
+
+          if (_lastUpdated != null && now.difference(_lastUpdated!).inMinutes >= 30) {
+            _refreshDataSilently();
+          }
         }
       }
     });
+  }
+
+  Future<void> _refreshDataSilently() async {
+    try {
+      if (_isUsingGps) {
+        final position = await _locationService.getCurrentPosition();
+        final weather = await _weatherService.fetchWeatherByCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+        if (mounted) {
+          setState(() {
+            _weather = weather;
+            _lastUpdated = DateTime.now();
+          });
+          _fetchAiSummary();
+        }
+      } else if (_currentSuggestion != null) {
+        final weather = await _weatherService.fetchWeatherByCoordinates(
+          _currentSuggestion!.lat,
+          _currentSuggestion!.lon,
+          _currentSuggestion!.name,
+        );
+        if (mounted) {
+          setState(() {
+            _weather = WeatherModel(
+              cityName: weather.cityName,
+              region: _currentSuggestion!.region,
+              country: _currentSuggestion!.country,
+              temperature: weather.temperature,
+              feelsLike: weather.feelsLike,
+              description: weather.description,
+              iconCode: weather.iconCode,
+              mainCondition: weather.mainCondition,
+              humidity: weather.humidity,
+              windSpeed: weather.windSpeed,
+              precipitation: weather.precipitation,
+              pressure: weather.pressure,
+              aqi: weather.aqi,
+              localTime: weather.localTime,
+              timezoneOffset: weather.timezoneOffset,
+              sunrise: weather.sunrise,
+              sunset: weather.sunset,
+              hourlyForecast: weather.hourlyForecast,
+              dailyForecast: weather.dailyForecast,
+            );
+            _lastUpdated = DateTime.now();
+          });
+          _fetchAiSummary();
+        }
+      }
+    } catch (e) {
+    }
   }
 
   @override
@@ -224,6 +285,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _isUsingGps = true;
+      _currentSuggestion = null;
     });
 
     try {
@@ -301,6 +364,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _isUsingGps = false;
+      _currentSuggestion = suggestion;
     });
 
     try {
@@ -1055,10 +1120,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: SizedBox(
                                     width: 160,
                                     height: 160,
-                                    child: AnimatedWeatherIcon(
-                                      iconCode: _weather!.isDayTime ? '01d' : '01n',
-                                      size: 160,
-                                      partOfDay: _weather!.partOfDay,
+                                    child: AnimatedOpacity(
+                                      opacity: _showTempAnimation ? 0.0 : 1.0,
+                                      duration: const Duration(milliseconds: 300),
+                                      child: AnimatedWeatherIcon(
+                                        iconCode: _weather!.isDayTime ? '01d' : '01n',
+                                        size: 160,
+                                        partOfDay: _weather!.partOfDay,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1534,7 +1603,10 @@ class _HomeScreenState extends State<HomeScreen> {
             if (_showTempAnimation && _weather != null)
               Positioned.fill(
                 child: IgnorePointer(
-                  child: WeatherOverlayManager(iconCode: _weather!.iconCode),
+                  child: WeatherOverlayManager(
+                    iconCode: _weather!.iconCode,
+                    partOfDay: _weather!.partOfDay,
+                  ),
                 ),
               ),
           ],
