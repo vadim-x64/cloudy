@@ -74,13 +74,6 @@ class _LiquidGlossyPainter extends CustomPainter {
     }
     path.close();
 
-    canvas.drawPath(
-      path.shift(const Offset(0, 6)),
-      Paint()
-        ..color = Colors.black26
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
-    );
-
     final gradientPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topLeft,

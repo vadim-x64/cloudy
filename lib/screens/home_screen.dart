@@ -11,6 +11,7 @@ import '../services/location_service.dart';
 import '../widgets/animated_weather_icon.dart';
 import '../widgets/weather_overlays.dart';
 import '../widgets/ai_chat_modal.dart';
+import '../widgets/weather_map_modal.dart';
 
 enum TempUnit { celsius, fahrenheit, kelvin }
 
@@ -38,6 +39,10 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isUsingGps = true;
   CitySuggestion? _currentSuggestion;
 
+  double _currentLat = 0.0;
+  double _currentLon = 0.0;
+
+  bool _isSettingsExpanded = false;
   final List<Map<String, String>> _aiChatHistory = [];
 
   @override
@@ -66,6 +71,8 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       if (_isUsingGps) {
         final position = await _locationService.getCurrentPosition();
+        _currentLat = position.latitude;
+        _currentLon = position.longitude;
         final weather = await _weatherService.fetchWeatherByCoordinates(
           position.latitude,
           position.longitude,
@@ -77,6 +84,8 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       } else if (_currentSuggestion != null) {
+        _currentLat = _currentSuggestion!.lat;
+        _currentLon = _currentSuggestion!.lon;
         final weather = await _weatherService.fetchWeatherByCoordinates(
           _currentSuggestion!.lat,
           _currentSuggestion!.lon,
@@ -232,6 +241,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final position = await _locationService.getCurrentPosition();
+      _currentLat = position.latitude;
+      _currentLon = position.longitude;
       final weather = await _weatherService.fetchWeatherByCoordinates(
         position.latitude,
         position.longitude,
@@ -309,6 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
+      _currentLat = suggestion.lat;
+      _currentLon = suggestion.lon;
       final weather = await _weatherService.fetchWeatherByCoordinates(
         suggestion.lat,
         suggestion.lon,
@@ -781,57 +794,68 @@ class _HomeScreenState extends State<HomeScreen> {
                             Container(
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
-                                shape: BoxShape.circle,
+                                borderRadius: BorderRadius.circular(25),
                               ),
-                              child: PopupMenuButton<TempUnit>(
-                                icon: const Icon(
-                                  Icons.thermostat,
-                                  color: Colors.white,
-                                  size: 22,
+                              child: AnimatedSize(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_isSettingsExpanded) ...[
+                                      PopupMenuButton<TempUnit>(
+                                        elevation: 0,
+                                        icon: const Icon(Icons.thermostat, color: Colors.white, size: 22),
+                                        color: Colors.blueGrey.shade900,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                        onSelected: (unit) => setState(() => _selectedUnit = unit),
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem(
+                                            value: TempUnit.celsius,
+                                            child: Text('°C - Цельсій', style: TextStyle(color: _selectedUnit == TempUnit.celsius ? Colors.blueAccent : Colors.white)),
+                                          ),
+                                          PopupMenuItem(
+                                            value: TempUnit.fahrenheit,
+                                            child: Text('°F - Фаренгейт', style: TextStyle(color: _selectedUnit == TempUnit.fahrenheit ? Colors.blueAccent : Colors.white)),
+                                          ),
+                                          PopupMenuItem(
+                                            value: TempUnit.kelvin,
+                                            child: Text('K - Кельвін', style: TextStyle(color: _selectedUnit == TempUnit.kelvin ? Colors.blueAccent : Colors.white)),
+                                          ),
+                                        ],
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.public, color: Colors.white, size: 22),
+                                        onPressed: () {
+                                          if (_weather != null) {
+                                            showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              backgroundColor: Colors.transparent,
+                                              elevation: 0,
+                                              builder: (context) => WeatherMapModal(
+                                                lat: _currentLat,
+                                                lon: _currentLon,
+                                              ),
+                                            );
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                    AnimatedRotation(
+                                      turns: _isSettingsExpanded ? 0.5 : 0.0,
+                                      duration: const Duration(milliseconds: 300),
+                                      child: IconButton(
+                                        icon: const Icon(Icons.settings, color: Colors.white, size: 22),
+                                        onPressed: () {
+                                          setState(() {
+                                            _isSettingsExpanded = !_isSettingsExpanded;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                color: Colors.blueGrey.shade900,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                onSelected: (unit) => setState(() {
-                                  _selectedUnit = unit;
-                                }),
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    value: TempUnit.celsius,
-                                    child: Text(
-                                      '°C - Цельсій',
-                                      style: TextStyle(
-                                        color: _selectedUnit == TempUnit.celsius
-                                            ? Colors.blueAccent
-                                            : Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  PopupMenuItem(
-                                    value: TempUnit.fahrenheit,
-                                    child: Text(
-                                      '°F - Фаренгейт',
-                                      style: TextStyle(
-                                        color:
-                                        _selectedUnit == TempUnit.fahrenheit
-                                            ? Colors.blueAccent
-                                            : Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  PopupMenuItem(
-                                    value: TempUnit.kelvin,
-                                    child: Text(
-                                      'K - Кельвін',
-                                      style: TextStyle(
-                                        color: _selectedUnit == TempUnit.kelvin
-                                            ? Colors.blueAccent
-                                            : Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -841,11 +865,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 shape: BoxShape.circle,
                               ),
                               child: IconButton(
-                                icon: const Icon(
-                                  Icons.my_location,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
+                                icon: const Icon(Icons.my_location, color: Colors.white, size: 22),
                                 onPressed: _loadWeatherByLocation,
                               ),
                             ),
@@ -928,21 +948,35 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: Row(
                                       crossAxisAlignment: CrossAxisAlignment.center,
                                       children: [
-                                        Text(
-                                          DateFormat('HH:mm').format(
-                                            _weather!.currentLocalTime,
-                                          ),
-                                          style: const TextStyle(
-                                            fontSize: 48,
-                                            fontWeight: FontWeight.w300,
-                                            color: Colors.white,
-                                            height: 1.0,
-                                          ),
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              DateFormat('HH').format(_weather!.currentLocalTime),
+                                              style: const TextStyle(
+                                                fontSize: 44,
+                                                fontWeight: FontWeight.w300,
+                                                color: Colors.white,
+                                                height: 1.0,
+                                                fontFeatures: [FontFeature.tabularFigures()],
+                                              ),
+                                            ),
+                                            Text(
+                                              DateFormat('mm').format(_weather!.currentLocalTime),
+                                              style: const TextStyle(
+                                                fontSize: 44,
+                                                fontWeight: FontWeight.w300,
+                                                color: Colors.white,
+                                                height: 1.0,
+                                                fontFeatures: [FontFeature.tabularFigures()],
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                         const SizedBox(width: 20),
                                         Container(
                                           width: 1,
-                                          height: 60,
+                                          height: 80,
                                           color: Colors.white.withOpacity(0.3),
                                         ),
                                         const SizedBox(width: 20),
@@ -1475,6 +1509,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                         const SizedBox(height: 30),
                                       ],
+                                      AnimatedEntrance(
+                                        delay: const Duration(milliseconds: 200),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(top: 10.0, bottom: 20.0),
+                                          child: Text(
+                                            '© 2026 Cloudy\nauthor: vadym voitsekhovskyi',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.normal,
+                                              height: 1.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   )
                                       : const SizedBox(width: double.infinity),
