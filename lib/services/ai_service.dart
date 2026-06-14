@@ -5,28 +5,82 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/weather_model.dart';
 
 class AiService {
-  Future<String?> generateDynamicSummary(
-    WeatherModel weather,
-    String unitStr,
-    String tempStr,
-    String feelsLikeStr,
-  ) async {
+  Future<String?> generateGreeting(WeatherModel weather) async {
+    try {
+      final apiKey = dotenv.env['GROK_API_KEY'];
+      if (apiKey == null || apiKey.trim().isEmpty) return 'Привіт!';
+
+      final isGroq = apiKey.trim().startsWith('gsk_');
+      final url = isGroq
+          ? Uri.parse('https://api.groq.com/openai/v1/chat/completions')
+          : Uri.parse('https://api.x.ai/v1/chat/completions');
+
+      final modelName = isGroq ? 'llama-3.1-8b-instant' : 'grok-beta';
+
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Authorization': 'Bearer $apiKey',
+            },
+            body: jsonEncode({
+              'model': modelName,
+              'messages': [
+                {
+                  'role': 'system',
+                  'content':
+                      'Ти - погодний асистент Cloudy. Привітайся з користувачем, викориcтовуй до 10 слів. '
+                          'Наприклад: "Привіт! Як настрій? Щось підказати по погоді?" або "Вітаю! Як проходить твій день?".',
+                },
+              ],
+              'temperature': 0.7,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data['choices'][0]['message']['content']
+            .toString()
+            .trim()
+            .replaceAll('"', '');
+      }
+      return 'Привіт! Чим можу допомогти?';
+    } catch (e) {
+      return 'Привіт! Чим можу допомогти?';
+    }
+  }
+
+  Future<String?> sendChatMessage({
+    required List<Map<String, String>> chatHistory,
+    required WeatherModel weather,
+    required String unitStr,
+  }) async {
     try {
       final apiKey = dotenv.env['GROK_API_KEY'];
 
       if (apiKey == null || apiKey.trim().isEmpty) {
-        return 'Помилка доступу до ШІ.';
+        return 'Помилка доступу до ШІ. Перевірте ключ API.';
       }
 
       final systemPrompt =
           '''
-        ШІ. Мені треба щоб ти надавав користувачам інформацію щодо погодних
-        умов на місцевості у реальному часі з такими параметрами як:
-        ${weather.cityName}, ${weather.description}, ${weather.partOfDay}, 
-        $tempStr$unitStr, $feelsLikeStr$unitStr, ${weather.windSpeed} 
-        (швидкість вітру), ${weather.precipitation}. Отже твоя задача проста -
-        написати один суцільний абзац тексту до 5 зв'язних речень із внятним, 
-        чітким, обгрунтованим та змістовним прогнозом погоди українською мовою.
+        ШІ, треба аби ти надавав поточні факти про погоду на локації користувача:
+        ${weather.cityName}
+        ${weather.description}
+        ${weather.partOfDay}
+        ${weather.temperature}$unitStr (відчувається як ${weather.feelsLike}$unitStr)
+        ${weather.windSpeed} м/с
+        ${weather.precipitation} мм
+        ${weather.humidity}%
+        ${weather.aqi}
+        
+        Твоя задача - вести природний діалог. Не просто перераховуй факти. Аналізуй їх! 
+        Якщо користувач просто вітається або питає "як справи", відповідай по-людськи і 
+        ненав'язливо згадуй погоду. Давай корисні поради: чи треба брати парасолю, сонцезахисні 
+        окуляри, чи варто вдягнути куртку, чи краще залишитись вдома (якщо AQI поганий або 
+        злива). Спілкуйся мовою, якою користувач говорить до тебе.
       ''';
 
       final isGroq = apiKey.trim().startsWith('gsk_');
@@ -35,53 +89,14 @@ class AiService {
           ? Uri.parse('https://api.groq.com/openai/v1/chat/completions')
           : Uri.parse('https://api.x.ai/v1/chat/completions');
 
-      List<String> modelsToTry = [];
+      List<String> modelsToTry = isGroq
+          ? ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it']
+          : ['grok-2-latest', 'grok-beta'];
 
-      if (isGroq) {
-        modelsToTry = [
-          'llama-3.3-70b-versatile',
-          'llama-3.1-8b-instant',
-          'gemma2-9b-it',
-          'llama-3.2-3b-preview',
-          'llama-3.2-1b-preview',
-        ];
-        print(
-          'Виявлено ключ. Використовуємо API Groq замість xAI.',
-        );
-      } else {
-        try {
-          final modelsUrl = Uri.parse('https://api.x.ai/v1/models');
-          final modelsRes = await http
-              .get(modelsUrl, headers: {'Authorization': 'Bearer $apiKey'})
-              .timeout(const Duration(seconds: 10));
-
-          if (modelsRes.statusCode == 200) {
-            final data = jsonDecode(modelsRes.body);
-            final List modelsList = data['data'] ?? [];
-
-            modelsToTry = modelsList
-                .map((m) => m['id'].toString())
-                .where(
-                  (id) => id.contains('grok'),
-                )
-                .toList();
-
-            print('Доступні моделі xAI для твого ключа: $modelsToTry');
-          } else {
-            print(
-              'Не вдалося динамічно отримати список моделей. Статус: ${modelsRes.statusCode}',
-            );
-          }
-        } catch (e) {
-          print('Помилка при отриманні списку моделей: $e');
-        }
-
-        if (modelsToTry.isEmpty) {
-          modelsToTry = ['grok-2-latest', 'grok-beta', 'grok-2'];
-        }
-      }
-
-      String lastError = '';
+      List<Map<String, String>> apiMessages = [
+        {'role': 'system', 'content': systemPrompt},
+        ...chatHistory,
+      ];
 
       for (final modelName in modelsToTry) {
         try {
@@ -94,41 +109,26 @@ class AiService {
                 },
                 body: jsonEncode({
                   'model': modelName,
-                  'messages': [
-                    {'role': 'system', 'content': systemPrompt}
-                  ],
+                  'messages': apiMessages,
                   'temperature': 0.7,
                   'stream': false,
                 }),
-              ).timeout(const Duration(seconds: 15));
+              )
+              .timeout(const Duration(seconds: 15));
 
           if (response.statusCode == 200) {
-            final responseBody = utf8.decode(response.bodyBytes);
-            final data = jsonDecode(responseBody);
-
+            final data = jsonDecode(utf8.decode(response.bodyBytes));
             final result = data['choices'][0]['message']['content']
                 .toString()
                 .trim();
-            print('Успішно використано модель: $modelName');
             return result.replaceAll('**', '').replaceAll('*', '');
-          } else {
-            lastError =
-                'Помилка $modelName: ${response.statusCode} - ${response.body}';
-            print(lastError);
-
-            if (response.statusCode == 401 || response.statusCode == 403) {
-              return 'Помилка авторизації. Перевір GROK_API_KEY.';
-            }
           }
-        } on TimeoutException {
-          print('Таймаут для моделі $modelName');
         } catch (e) {
-          print('Помилка при запиті до $modelName: $e');
+          print('Помилка $modelName: $e');
         }
       }
       return null;
     } catch (e) {
-      print('Загальна помилка AiService: $e');
       return null;
     }
   }

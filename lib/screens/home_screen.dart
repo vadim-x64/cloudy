@@ -8,9 +8,9 @@ import '../widgets/dynamic_loader.dart';
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../services/location_service.dart';
-import '../services/ai_service.dart';
 import '../widgets/animated_weather_icon.dart';
 import '../widgets/weather_overlays.dart';
+import '../widgets/ai_chat_modal.dart';
 
 enum TempUnit { celsius, fahrenheit, kelvin }
 
@@ -24,7 +24,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _weatherService = WeatherService();
   final _locationService = LocationService();
-  final _aiService = AiService();
 
   WeatherModel? _weather;
   DateTime? _lastUpdated;
@@ -32,14 +31,14 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _errorMessage;
   TempUnit _selectedUnit = TempUnit.celsius;
   bool _showDetails = false;
-  String? _aiSummary;
-  bool _isAiGenerating = false;
   Timer? _clockTimer;
   int _lastMinute = DateTime.now().minute;
 
   bool _showTempAnimation = false;
   bool _isUsingGps = true;
   CitySuggestion? _currentSuggestion;
+
+  final List<Map<String, String>> _aiChatHistory = [];
 
   @override
   void initState() {
@@ -76,7 +75,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _weather = weather;
             _lastUpdated = DateTime.now();
           });
-          _fetchAiSummary();
         }
       } else if (_currentSuggestion != null) {
         final weather = await _weatherService.fetchWeatherByCoordinates(
@@ -109,7 +107,6 @@ class _HomeScreenState extends State<HomeScreen> {
             );
             _lastUpdated = DateTime.now();
           });
-          _fetchAiSummary();
         }
       }
     } catch (e) {
@@ -138,80 +135,24 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  String _generateWeatherSummaryFallback(WeatherModel w) {
-    String desc = w.description.toLowerCase();
-    String tempStr = _formatTempOnlyNumber(w.temperature);
-    String feelsStr = _formatTempOnlyNumber(w.feelsLike);
-    String unit = _selectedUnit == TempUnit.celsius
-        ? '°C'
-        : (_selectedUnit == TempUnit.fahrenheit ? '°F' : 'K');
-
-    String s1 =
-        'У місті ${w.cityName} зараз $desc, температура $tempStr$unit (відчувається як $feelsStr$unit).';
-
-    String s2 = 'Вітер ${w.windSpeed.toStringAsFixed(1)} м/с.';
-    if (w.precipitation > 0) {
-      s2 += ' Очікуються опади (${w.precipitation} мм).';
-    } else {
-      s2 += ' Без значних опадів.';
-    }
-
-    String s3 = w.aqi >= 4 ? 'Якість повітря погіршена.' : 'Повітря в нормі.';
-
-    String s4 = '';
-    if (w.precipitation > 0) {
-      s4 = 'Обов\'язково захопіть парасолю!';
-    } else if (w.temperature < 0) {
-      s4 = 'Одягайтеся дуже тепло, надворі мороз.';
-    } else if (w.temperature >= 0 && w.temperature < 15) {
-      s4 = 'Варто накинути теплу куртку або светр.';
-    } else if (w.temperature >= 15 && w.temperature < 25) {
-      s4 = 'Комфортна погода для легкого одягу.';
-    } else {
-      s4 = 'Надворі спекотно, не забудьте про воду та головний убір.';
-    }
-
-    if (w.precipitation == 0 &&
-        w.aqi < 4 &&
-        w.windSpeed < 10 &&
-        w.temperature > 0 &&
-        w.temperature < 30) {
-      s4 += ' Чудовий час для прогулянки!';
-    } else if (w.aqi >= 4 || w.windSpeed > 15 || w.precipitation > 2) {
-      s4 += ' Краще утриматися від довгих прогулянок.';
-    }
-
-    return '$s1 $s2 $s3 $s4';
-  }
-
-  Future<void> _fetchAiSummary() async {
+  void _openAiChat() {
     if (_weather == null) return;
 
-    setState(() {
-      _isAiGenerating = true;
-      _aiSummary = null;
-    });
-
-    String unitStr = _selectedUnit == TempUnit.celsius
-        ? '°C'
-        : (_selectedUnit == TempUnit.fahrenheit ? '°F' : 'K');
-
-    String tempStr = _formatTempOnlyNumber(_weather!.temperature);
-    String feelsStr = _formatTempOnlyNumber(_weather!.feelsLike);
-
-    final summary = await _aiService.generateDynamicSummary(
-      _weather!,
-      unitStr,
-      tempStr,
-      feelsStr,
-    );
-
-    if (mounted) {
-      setState(() {
-        _aiSummary = summary;
-        _isAiGenerating = false;
-      });
+    for (var msg in _aiChatHistory) {
+      msg['isNew'] = 'false';
     }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      builder: (context) => AiChatModal(
+        weather: _weather!,
+        selectedUnit: _selectedUnit,
+        chatHistory: _aiChatHistory,
+      ),
+    );
   }
 
   String _formatTemp(double tempC) {
@@ -300,7 +241,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _lastUpdated = DateTime.now();
         _showDetails = false;
       });
-      _fetchAiSummary();
     } catch (e) {
       if (e is LocationException) {
         _showLocationErrorDialog(e);
@@ -400,7 +340,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _lastUpdated = DateTime.now();
         _showDetails = false;
       });
-      _fetchAiSummary();
     } catch (e) {
       _handleNetworkError(e);
     } finally {
@@ -468,12 +407,12 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 'Ніч':
       default:
-      baseColors = [
-        const Color(0xFF050314),
-        const Color(0xFF10092B),
-        const Color(0xFF0B1736),
-        const Color(0xFF0A1B3F),
-      ];
+        baseColors = [
+          const Color(0xFF050314),
+          const Color(0xFF10092B),
+          const Color(0xFF0B1736),
+          const Color(0xFF0A1B3F),
+        ];
         break;
     }
 
@@ -643,6 +582,25 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
+        extendBody: true,
+        floatingActionButton: _weather != null
+            ? AnimatedEntrance(
+          delay: const Duration(milliseconds: 600),
+          child: FloatingActionButton(
+            onPressed: _openAiChat,
+            backgroundColor: Colors.white.withOpacity(0.2),
+            elevation: 0,
+            highlightElevation: 0,
+            focusElevation: 0,
+            hoverElevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: Colors.white.withOpacity(0.3)),
+            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.white),
+          ),
+        )
+            : null,
         body: Stack(
           children: [
             AnimatedContainer(
@@ -837,7 +795,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 onSelected: (unit) => setState(() {
                                   _selectedUnit = unit;
-                                  _fetchAiSummary();
                                 }),
                                 itemBuilder: (context) => [
                                   PopupMenuItem(
@@ -1184,76 +1141,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ),
                                     ],
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                AnimatedEntrance(
-                                  delay: const Duration(milliseconds: 275),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0,
-                                    ),
-                                    child: AnimatedSize(
-                                      duration: const Duration(milliseconds: 200),
-                                      curve: Curves.easeOutCubic,
-                                      alignment: Alignment.topCenter,
-                                      child: SizedBox(
-                                        width: double.infinity,
-                                        child: AnimatedSwitcher(
-                                          duration: const Duration(
-                                            milliseconds: 400,
-                                          ),
-                                          child: _isAiGenerating
-                                              ? Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                            key: const ValueKey('loading'),
-                                            children: [
-                                              SizedBox(
-                                                width: 14,
-                                                height: 14,
-                                                child:
-                                                CircularProgressIndicator(
-                                                  color: Colors.white
-                                                      .withOpacity(0.8),
-                                                  strokeWidth: 2,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Text(
-                                                'Аналізую погоду...',
-                                                style: TextStyle(
-                                                  color: Colors.white
-                                                      .withOpacity(0.8),
-                                                  fontStyle:
-                                                  FontStyle.italic,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                            ],
-                                          )
-                                              : TypewriterText(
-                                            key: ValueKey(
-                                              _aiSummary ?? 'text',
-                                            ),
-                                            text:
-                                            _aiSummary ??
-                                                _generateWeatherSummaryFallback(
-                                                  _weather!,
-                                                ),
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.white
-                                                  .withOpacity(0.85),
-                                              fontWeight: FontWeight.w400,
-                                              fontStyle: FontStyle.italic,
-                                              height: 1.4,
-                                            ),
-                                            textAlign: TextAlign.justify,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 40),
