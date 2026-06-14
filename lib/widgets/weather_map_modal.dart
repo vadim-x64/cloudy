@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import '../services/location_service.dart';
+import '../services/weather_service.dart';
 
 class WeatherMapModal extends StatefulWidget {
   final double lat;
@@ -21,10 +22,15 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
   String _activeFilter = 'precipitation_new';
   final MapController _mapController = MapController();
   final _locationService = LocationService();
+  final _weatherService = WeatherService();
 
   bool _isLoadingLocation = false;
   bool _isLoadingData = false;
   List<Marker> _markers = [];
+
+  LatLng? _tappedPoint;
+  Map<String, dynamic>? _tappedLocationInfo;
+  bool _isLoadingTappedLocation = false;
 
   final List<Map<String, String>> _filters = [
     {'id': 'precipitation_new', 'name': 'Опади'},
@@ -143,6 +149,46 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
     }
   }
 
+  Future<void> _onMapTap(TapPosition tapPosition, LatLng point) async {
+    setState(() {
+      _tappedPoint = point;
+      _isLoadingTappedLocation = true;
+      _tappedLocationInfo = null;
+    });
+
+    try {
+      final weather = await _weatherService.fetchWeatherByCoordinates(
+          point.latitude,
+          point.longitude
+      );
+      if (mounted) {
+        setState(() {
+          _tappedLocationInfo = {
+            'lat': point.latitude,
+            'lon': point.longitude,
+            'name': weather.cityName,
+            'temp': weather.temperature,
+          };
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _tappedLocationInfo = {
+            'lat': point.latitude,
+            'lon': point.longitude,
+            'name': 'Невідоме місце',
+            'temp': null,
+          };
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingTappedLocation = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final apiKey = dotenv.env['OPENWEATHER_API_KEY'] ?? '';
@@ -163,6 +209,7 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                 interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
                 ),
+                onTap: _onMapTap,
               ),
               children: [
                 TileLayer(
@@ -176,6 +223,23 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                   ),
                 if (!isWeatherLayer)
                   MarkerLayer(markers: _markers),
+
+                if (_tappedPoint != null)
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: _tappedPoint!,
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.topCenter,
+                        child: const Icon(
+                          Icons.location_pin,
+                          color: Colors.redAccent,
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
             Positioned(
@@ -253,6 +317,88 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                 ),
               ),
             ),
+
+            if (_isLoadingTappedLocation || _tappedLocationInfo != null)
+              Positioned(
+                bottom: 30,
+                left: 16,
+                right: 80,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blueGrey.shade900.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: _isLoadingTappedLocation
+                          ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(color: Colors.blueAccent, strokeWidth: 2),
+                          ),
+                          SizedBox(width: 12),
+                          Text('Отримання даних...', style: TextStyle(color: Colors.white70)),
+                        ],
+                      )
+                          : Row(
+                        children: [
+                          const Icon(Icons.location_on, color: Colors.redAccent, size: 28),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _tappedLocationInfo!['name'],
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Шир: ${_tappedLocationInfo!['lat'].toStringAsFixed(4)}, Довг: ${_tappedLocationInfo!['lon'].toStringAsFixed(4)}',
+                                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_tappedLocationInfo!['temp'] != null)
+                            Text(
+                              '${_tappedLocationInfo!['temp'].round()}°C',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w300),
+                            ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                _tappedPoint = null;
+                                _tappedLocationInfo = null;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             Positioned(
               right: 16,
               bottom: 30,
