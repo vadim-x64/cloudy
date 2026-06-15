@@ -597,19 +597,19 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         extendBody: true,
         floatingActionButton: _weather != null
-            ? Padding(
-          padding: const EdgeInsets.only(right: 4.0),
+            ? Transform.translate(
+          offset: const Offset(0, 0),
           child: AnimatedEntrance(
             delay: const Duration(milliseconds: 600),
             child: FloatingActionButton(
               onPressed: _openAiChat,
-              backgroundColor: Colors.white.withOpacity(0.5),
+              backgroundColor: Colors.black.withOpacity(0.25),
               elevation: 0,
               highlightElevation: 0,
               focusElevation: 0,
               hoverElevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(200),
                 side: BorderSide(color: Colors.white.withOpacity(0.6)),
               ),
               child: const Icon(Icons.auto_awesome, color: Colors.white),
@@ -1466,38 +1466,32 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       SizedBox(
                                                         width: 120,
                                                         child: Row(
-                                                          mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .end,
+                                                          mainAxisAlignment: MainAxisAlignment.end,
                                                           children: [
-                                                            Text(
-                                                              _formatTemp(
-                                                                daily
-                                                                    .minTemp,
-                                                              ),
-                                                              style: const TextStyle(
-                                                                color: Colors
-                                                                    .white70,
-                                                                fontSize:
-                                                                16,
+                                                            SizedBox(
+                                                              width: 50,
+                                                              child: Text(
+                                                                _formatTemp(daily.minTemp),
+                                                                textAlign: TextAlign.right,
+                                                                style: const TextStyle(
+                                                                  color: Colors.white70,
+                                                                  fontSize: 16,
+                                                                  fontFeatures: [FontFeature.tabularFigures()],
+                                                                ),
                                                               ),
                                                             ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            Text(
-                                                              _formatTemp(
-                                                                daily
-                                                                    .maxTemp,
-                                                              ),
-                                                              style: const TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                FontWeight
-                                                                    .bold,
-                                                                fontSize:
-                                                                16,
+                                                            const SizedBox(width: 10),
+                                                            SizedBox(
+                                                              width: 50,
+                                                              child: Text(
+                                                                _formatTemp(daily.maxTemp),
+                                                                textAlign: TextAlign.right,
+                                                                style: const TextStyle(
+                                                                  color: Colors.white,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  fontSize: 16,
+                                                                  fontFeatures: [FontFeature.tabularFigures()],
+                                                                ),
                                                               ),
                                                             ),
                                                           ],

@@ -17,6 +17,8 @@ class AiService {
 
       final modelName = isGroq ? 'llama-3.1-8b-instant' : 'grok-beta';
 
+      final systemContent = dotenv.env['AI_GREETING_PROMPT'];
+
       final response = await http
           .post(
             url,
@@ -27,12 +29,7 @@ class AiService {
             body: jsonEncode({
               'model': modelName,
               'messages': [
-                {
-                  'role': 'system',
-                  'content':
-                      'Ти - погодний асистент Cloudy. Привітайся з користувачем, викориcтовуй до 10 слів. '
-                          'Наприклад: "Привіт! Як настрій? Щось підказати по погоді?" або "Вітаю! Як проходить твій день?".',
-                },
+                {'role': 'system', 'content': systemContent},
               ],
               'temperature': 0.7,
             }),
@@ -64,27 +61,24 @@ class AiService {
         return 'Помилка доступу до ШІ. Перевірте ключ API.';
       }
 
-      final systemPrompt =
-          '''
-        ШІ, треба аби ти надавав поточні факти про погоду на локації користувача:
-        ${weather.cityName}
-        ${weather.description}
-        ${weather.partOfDay}
-        ${weather.temperature}$unitStr (відчувається як ${weather.feelsLike}$unitStr)
-        ${weather.windSpeed} м/с
-        ${weather.precipitation} мм
-        ${weather.humidity}%
-        ${weather.aqi}
-        
-        Твоя задача - вести природний діалог. Не просто перераховуй факти. Аналізуй їх! 
-        Якщо користувач просто вітається або питає "як справи", відповідай по-людськи і 
-        ненав'язливо згадуй погоду. Давай корисні поради: чи треба брати парасолю, сонцезахисні 
-        окуляри, чи варто вдягнути куртку, чи краще залишитись вдома (якщо AQI поганий або 
-        злива). Спілкуйся мовою, якою користувач говорить до тебе.
-      ''';
+      final rawPrompt =
+          dotenv.env['AI_CHAT_PROMPT'] ??
+          '{cityName}{description}{partOfDay}{temperature}{unitStr}{feelsLike}{unitStr}{windSpeed}{precipitation}{humidity}{aqi}';
+
+      final systemPrompt = rawPrompt
+          .replaceAll(r'\n', '\n')
+          .replaceAll('{cityName}', weather.cityName)
+          .replaceAll('{description}', weather.description)
+          .replaceAll('{partOfDay}', weather.partOfDay)
+          .replaceAll('{temperature}', weather.temperature.toString())
+          .replaceAll('{feelsLike}', weather.feelsLike.toString())
+          .replaceAll('{unitStr}', unitStr)
+          .replaceAll('{windSpeed}', weather.windSpeed.toString())
+          .replaceAll('{precipitation}', weather.precipitation.toString())
+          .replaceAll('{humidity}', weather.humidity.toString())
+          .replaceAll('{aqi}', weather.aqi.toString());
 
       final isGroq = apiKey.trim().startsWith('gsk_');
-
       final url = isGroq
           ? Uri.parse('https://api.groq.com/openai/v1/chat/completions')
           : Uri.parse('https://api.x.ai/v1/chat/completions');
