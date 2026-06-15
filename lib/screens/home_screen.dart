@@ -597,20 +597,23 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         extendBody: true,
         floatingActionButton: _weather != null
-            ? AnimatedEntrance(
-          delay: const Duration(milliseconds: 600),
-          child: FloatingActionButton(
-            onPressed: _openAiChat,
-            backgroundColor: Colors.white.withOpacity(0.2),
-            elevation: 0,
-            highlightElevation: 0,
-            focusElevation: 0,
-            hoverElevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: Colors.white.withOpacity(0.3)),
+            ? Padding(
+          padding: const EdgeInsets.only(right: 4.0),
+          child: AnimatedEntrance(
+            delay: const Duration(milliseconds: 600),
+            child: FloatingActionButton(
+              onPressed: _openAiChat,
+              backgroundColor: Colors.white.withOpacity(0.5),
+              elevation: 0,
+              highlightElevation: 0,
+              focusElevation: 0,
+              hoverElevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: Colors.white.withOpacity(0.6)),
+              ),
+              child: const Icon(Icons.auto_awesome, color: Colors.white),
             ),
-            child: const Icon(Icons.auto_awesome, color: Colors.white),
           ),
         )
             : null,

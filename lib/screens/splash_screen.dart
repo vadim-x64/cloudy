@@ -120,13 +120,6 @@ class _SplashScreenState extends State<SplashScreen>
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   letterSpacing: 3.0,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    )
-                  ],
                 ),
               ),
             ),

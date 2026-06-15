@@ -106,6 +106,11 @@ class _AiChatModalState extends State<AiChatModal> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+
+    final totalBottomPadding = bottomInset > 0
+        ? bottomInset + 10
+        : safeAreaBottom + 24;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -113,7 +118,12 @@ class _AiChatModalState extends State<AiChatModal> {
         filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
         child: Container(
           height: MediaQuery.of(context).size.height * 0.75,
-          padding: EdgeInsets.only(bottom: bottomInset, left: 16, right: 16, top: 16),
+          padding: EdgeInsets.only(
+              bottom: totalBottomPadding,
+              left: 16,
+              right: 16,
+              top: 16
+          ),
           decoration: BoxDecoration(
             color: Colors.blueGrey.shade900.withOpacity(0.6),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
