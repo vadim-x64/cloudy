@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
@@ -12,6 +13,7 @@ import '../widgets/animated_weather_icon.dart';
 import '../widgets/weather_overlays.dart';
 import '../widgets/ai_chat_modal.dart';
 import '../widgets/weather_map_modal.dart';
+import '../widgets/tutorial_overlay.dart';
 
 enum TempUnit { celsius, fahrenheit, kelvin }
 
@@ -26,6 +28,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _weatherService = WeatherService();
   final _locationService = LocationService();
   final GlobalKey _smallWeatherIconKey = GlobalKey();
+  final GlobalKey _searchKey = GlobalKey();
+  final GlobalKey _settingsKey = GlobalKey();
+  final GlobalKey _tempKey = GlobalKey();
+  final GlobalKey _detailsKey = GlobalKey();
+  final GlobalKey _aiChatKey = GlobalKey();
 
   WeatherModel? _weather;
   DateTime? _lastUpdated;
@@ -68,6 +75,47 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       }
     });
+  }
+
+  Future<void> _checkAndShowTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isFirstLaunch = prefs.getBool('is_first_launch') ?? true;
+
+    if (isFirstLaunch && _weather != null && mounted) {
+      await prefs.setBool('is_first_launch', false);
+
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (!mounted) return;
+
+        TutorialOverlay.show(context, [
+          TutorialStep(
+            key: _searchKey,
+            title: 'Розумний пошук',
+            description: 'Шукайте будь-яке місто у світі, щоб дізнатися там погоду.',
+          ),
+          TutorialStep(
+            key: _settingsKey,
+            title: 'Налаштування та Карта',
+            description: 'Змінюйте одиниці виміру або відкривайте глобальну погодну карту з шарами опадів.',
+          ),
+          TutorialStep(
+            key: _tempKey,
+            title: 'Секретна анімація',
+            description: 'Натисніть на температуру, щоб побачити круту повноекранну погодну анімацію!',
+          ),
+          TutorialStep(
+            key: _detailsKey,
+            title: 'Більше деталей',
+            description: 'Розгорніть це меню для перегляду вологості, тиску, якості повітря та прогнозу на 5 днів.',
+          ),
+          TutorialStep(
+            key: _aiChatKey,
+            title: 'ШІ-Асистент',
+            description: 'Ваш персональний метеоролог! Запитуйте поради щодо одягу або парасолі.',
+          ),
+        ]);
+      });
+    }
   }
 
   Future<void> _refreshDataSilently() async {
@@ -262,6 +310,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _lastUpdated = DateTime.now();
         _showDetails = false;
       });
+      _checkAndShowTutorial();
     } catch (e) {
       if (e is LocationException) {
         _showLocationErrorDialog(e);
@@ -363,6 +412,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _lastUpdated = DateTime.now();
         _showDetails = false;
       });
+      _checkAndShowTutorial();
     } catch (e) {
       _handleNetworkError(e);
     } finally {
@@ -612,6 +662,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           child: AnimatedEntrance(
             delay: const Duration(milliseconds: 600),
             child: FloatingActionButton(
+              key: _aiChatKey,
               onPressed: _openAiChat,
               backgroundColor: Colors.black.withOpacity(0.25),
               elevation: 0,
@@ -674,6 +725,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         Row(
                           children: [
                             Expanded(
+                              key: _searchKey,
                               child: Autocomplete<CitySuggestion>(
                                 optionsBuilder:
                                     (TextEditingValue textEditingValue) async {
@@ -805,6 +857,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                             const SizedBox(width: 8),
                             Container(
+                              key: _settingsKey,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(25),
@@ -1135,6 +1188,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 AnimatedEntrance(
                                   delay: const Duration(milliseconds: 200),
                                   child: GestureDetector(
+                                    key: _tempKey,
                                     onTap: _handleTempTap,
                                     behavior: HitTestBehavior.opaque,
                                     child: Row(
@@ -1238,6 +1292,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 AnimatedEntrance(
                                   delay: const Duration(milliseconds: 400),
                                   child: TextButton.icon(
+                                    key: _detailsKey,
                                     onPressed: () {
                                       setState(() {
                                         _showDetails = !_showDetails;
