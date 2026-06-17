@@ -25,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _weatherService = WeatherService();
   final _locationService = LocationService();
+  final GlobalKey _smallWeatherIconKey = GlobalKey();
 
   WeatherModel? _weather;
   DateTime? _lastUpdated;
@@ -1114,14 +1115,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: SizedBox(
                                     width: 160,
                                     height: 160,
-                                    child: AnimatedOpacity(
-                                      opacity: _showTempAnimation ? 0.0 : 1.0,
-                                      duration: const Duration(milliseconds: 300),
-                                      child: AnimatedWeatherIcon(
-                                        iconCode: _weather!.isDayTime ? '01d' : '01n',
-                                        size: 160,
-                                        partOfDay: _weather!.partOfDay,
-                                      ),
+                                    child: AnimatedWeatherIcon(
+                                      iconCode: _weather!.isDayTime ? '01d' : '01n',
+                                      size: 160,
+                                      partOfDay: _weather!.partOfDay,
                                     ),
                                   ),
                                 ),
@@ -1158,6 +1155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       AnimatedWeatherIcon(
+                                        key: _smallWeatherIconKey, // <-- Додаємо ключ сюди
                                         iconCode: _weather!.iconCode,
                                         size: 50,
                                         partOfDay: _weather!.partOfDay,
@@ -1540,6 +1538,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: WeatherOverlayManager(
                     iconCode: _weather!.iconCode,
                     partOfDay: _weather!.partOfDay,
+                    sourceKey: _smallWeatherIconKey, // <-- Передаємо ключ в менеджер
                   ),
                 ),
               ),

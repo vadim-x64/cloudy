@@ -4,8 +4,14 @@ import 'package:flutter/material.dart';
 class WeatherOverlayManager extends StatefulWidget {
   final String iconCode;
   final String partOfDay;
+  final GlobalKey? sourceKey;
 
-  const WeatherOverlayManager({super.key, required this.iconCode, required this.partOfDay});
+  const WeatherOverlayManager({
+    super.key,
+    required this.iconCode,
+    required this.partOfDay,
+    this.sourceKey,
+  });
 
   @override
   State<WeatherOverlayManager> createState() => _WeatherOverlayManagerState();
@@ -14,6 +20,7 @@ class WeatherOverlayManager extends StatefulWidget {
 class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  Alignment _originAlignment = const Alignment(0.0, 0.5);
 
   @override
   void initState() {
@@ -23,6 +30,33 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
       vsync: this,
       duration: const Duration(seconds: 3),
     )..forward();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateOrigin();
+    });
+  }
+
+  void _calculateOrigin() {
+    if (widget.sourceKey?.currentContext != null) {
+      final RenderBox box = widget.sourceKey!.currentContext!.findRenderObject() as RenderBox;
+      // Отримуємо глобальні координати маленької іконки
+      final Offset position = box.localToGlobal(Offset.zero);
+      final Size screenSize = MediaQuery.of(context).size;
+
+      // Знаходимо центр іконки
+      final double centerX = position.dx + box.size.width / 2;
+      final double centerY = position.dy + box.size.height / 2;
+
+      // Конвертуємо координати екрану в Alignment (від -1.0 до 1.0)
+      if (mounted) {
+        setState(() {
+          _originAlignment = Alignment(
+            (centerX / screenSize.width) * 2 - 1,
+            (centerY / screenSize.height) * 2 - 1,
+          );
+        });
+      }
+    }
   }
 
   @override
@@ -33,20 +67,34 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
 
   @override
   Widget build(BuildContext context) {
+    // Анімація ЗБІЛЬШЕННЯ/ЗМЕНШЕННЯ: вилітає плавно (easeOut), висить, ховається (easeIn)
+    final scaleAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeOutCubic)), weight: 20),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 60),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeInCubic)), weight: 20),
+    ]).animate(_controller);
+
+    // Анімація ПРОЗОРОСТІ: короткий fade-in та fade-out, щоб ефект був "м'яким" по краях
+    final fadeAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 10),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 80),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 10),
+    ]).animate(_controller);
+
     return FadeTransition(
-      opacity: TweenSequence<double>([
-        TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 15),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 70),
-        TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 15),
-      ]).animate(_controller),
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          return CustomPaint(
-            painter: _getPainterForWeather(widget.iconCode, _controller.value, widget.partOfDay),
-            size: Size.infinite,
-          );
-        },
+      opacity: fadeAnim,
+      child: ScaleTransition(
+        scale: scaleAnim,
+        alignment: _originAlignment, // <-- Ефект виливатиметься прямо з нашої маленької іконки
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return CustomPaint(
+              painter: _getPainterForWeather(widget.iconCode, _controller.value, widget.partOfDay),
+              size: Size.infinite,
+            );
+          },
+        ),
       ),
     );
   }
