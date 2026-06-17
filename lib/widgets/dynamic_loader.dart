@@ -76,14 +76,15 @@ class _LiquidGlossyPainter extends CustomPainter {
 
     final gradientPaint = Paint()
       ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
+        begin: Alignment(-1.0 + math.sin(progress * math.pi * 2) * 0.5, -1.0 + math.cos(progress * math.pi) * 0.5),
+        end: Alignment(1.0 + math.cos(progress * math.pi * 2) * 0.5, 1.0 + math.sin(progress * math.pi) * 0.5),
+        colors: const [
           Colors.white,
-          Colors.grey.shade300,
-          Colors.grey.shade300,
+          Color(0xFFFAFAFA),
+          Color(0xFFEFEFEF),
+          Colors.white,
         ],
-        stops: const [0.1, 0.5, 0.9],
+        stops: const [0.0, 0.4, 0.7, 1.0],
         transform: GradientRotation(progress * math.pi * 2),
       ).createShader(Rect.fromCircle(center: center, radius: baseRadius));
 

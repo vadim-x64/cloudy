@@ -22,7 +22,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _weatherService = WeatherService();
   final _locationService = LocationService();
   final GlobalKey _smallWeatherIconKey = GlobalKey();
@@ -49,6 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
     _loadWeatherByLocation();
 
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -125,8 +127,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _clockTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshDataSilently();
+    }
   }
 
   void _handleTempTap() {
@@ -135,11 +145,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _showTempAnimation = true;
     });
 
-    // Синхронізуємо з тривалістю оверлею
     Future.delayed(const Duration(milliseconds: 3500), () {
       if (mounted) {
         setState(() {
-          _showTempAnimation = false; // Запускає плавне повернення (fade-in) маленької іконки
+          _showTempAnimation = false;
         });
       }
     });
@@ -1155,7 +1164,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       AnimatedOpacity(
-                                        duration: const Duration(milliseconds: 400), // Плавність зникнення та появи
+                                        duration: const Duration(milliseconds: 400),
                                         opacity: _showTempAnimation ? 0.0 : 1.0,
                                         curve: Curves.easeInOut,
                                         child: AnimatedWeatherIcon(
@@ -1512,7 +1521,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         child: Padding(
                                           padding: const EdgeInsets.only(top: 10.0, bottom: 20.0),
                                           child: Text(
-                                            '© 2026 Cloudy\nauthor: vadym voitsekhovskyi',
+                                            '© 2026 Cloudy\ndeveloped by voitsekhovskyi',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                               color: Colors.white,
@@ -1541,7 +1550,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: WeatherOverlayManager(
                     iconCode: _weather!.iconCode,
                     partOfDay: _weather!.partOfDay,
-                    sourceKey: _smallWeatherIconKey, // <-- Передаємо ключ в менеджер
+                    sourceKey: _smallWeatherIconKey,
                   ),
                 ),
               ),
