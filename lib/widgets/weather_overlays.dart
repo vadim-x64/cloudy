@@ -25,10 +25,10 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
   @override
   void initState() {
     super.initState();
-
+    // Задаємо тривалість 3500 мс (на 100 мс менше ніж таймер видалення)
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(milliseconds: 3500),
     )..forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -67,34 +67,32 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
 
   @override
   Widget build(BuildContext context) {
-    // Анімація ЗБІЛЬШЕННЯ/ЗМЕНШЕННЯ: вилітає плавно (easeOut), висить, ховається (easeIn)
+    // Анімація МАСШТАБУ без вицвітання:
+    // Вилітає з ефектом пружинки (easeOutBack), висить, плавно ховається в ту ж точку.
     final scaleAnim = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeOutCubic)), weight: 20),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 60),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeInCubic)), weight: 20),
+      TweenSequenceItem(
+          tween: Tween(begin: 0.02, end: 1.0).chain(CurveTween(curve: Curves.easeOutBack)),
+          weight: 20),
+      TweenSequenceItem(
+          tween: ConstantTween(1.0),
+          weight: 60),
+      TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 0.02).chain(CurveTween(curve: Curves.easeInOutCubic)),
+          weight: 20),
     ]).animate(_controller);
 
-    // Анімація ПРОЗОРОСТІ: короткий fade-in та fade-out, щоб ефект був "м'яким" по краях
-    final fadeAnim = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 10),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 80),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 10),
-    ]).animate(_controller);
-
-    return FadeTransition(
-      opacity: fadeAnim,
-      child: ScaleTransition(
-        scale: scaleAnim,
-        alignment: _originAlignment, // <-- Ефект виливатиметься прямо з нашої маленької іконки
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            return CustomPaint(
-              painter: _getPainterForWeather(widget.iconCode, _controller.value, widget.partOfDay),
-              size: Size.infinite,
-            );
-          },
-        ),
+    // Видалено FadeTransition. Використовуємо лише ScaleTransition.
+    return ScaleTransition(
+      scale: scaleAnim,
+      alignment: _originAlignment, // <-- Ефект виливатиметься прямо з нашої маленької іконки
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            painter: _getPainterForWeather(widget.iconCode, _controller.value, widget.partOfDay),
+            size: Size.infinite,
+          );
+        },
       ),
     );
   }
@@ -315,21 +313,38 @@ class _CloudPainter extends CustomPainter {
 
       canvas.drawPath(
         path,
-        paint..color = Colors.white.withOpacity(0.9 * opacity),
+        paint..color = Colors.white,
       );
       canvas.restore();
     }
 
     double fade = math.sin(progress * math.pi);
-    double moveX = progress * size.width * 0.4;
+    // Трохи зменшимо швидкість вітру, щоб вони не так швидко зліталися
+    double moveX = progress * size.width * 0.3;
 
+    // Плавання по осі Y
     double floatY1 = math.sin(progress * math.pi * 2) * 15;
     double floatY2 = math.cos(progress * math.pi * 2) * 20;
     double floatY3 = math.sin(progress * math.pi * 2 + math.pi / 4) * 12;
+    double floatY4 = math.cos(progress * math.pi * 2 + math.pi / 3) * 18;
+    double floatY5 = math.sin(progress * math.pi * 2 - math.pi / 6) * 14;
 
-    drawCloud(size.width * 0.15 + moveX, size.height * 0.25 + floatY1, 1.3, fade * 0.8);
-    drawCloud(size.width * 0.85 - moveX * 1.2, size.height * 0.45 + floatY2, 1.1, fade);
-    drawCloud(size.width * 0.05 + moveX * 1.5, size.height * 0.65 + floatY3, 1.7, fade * 0.9);
+    // Розкидаємо хмари так, щоб вони створювали глибину і не злипалися:
+
+    // 1. Верхня ліва (велика, трохи на задньому плані)
+    drawCloud(size.width * 0.1 + moveX * 0.8, size.height * 0.15 + floatY1, 1.4, fade * 0.6);
+
+    // 2. Верхня права (середня, ближче до нас, пливе назустріч)
+    drawCloud(size.width * 0.85 - moveX * 0.5, size.height * 0.25 + floatY2, 1.1, fade * 0.9);
+
+    // 3. Центральна ліва (дуже маленька, далеко на фоні)
+    drawCloud(size.width * -0.05 + moveX * 1.2, size.height * 0.45 + floatY3, 0.8, fade * 0.4);
+
+    // 4. Центральна права (величезна, на самому передньому плані)
+    drawCloud(size.width * 0.75 + moveX * 0.6, size.height * 0.65 + floatY4, 1.7, fade * 0.95);
+
+    // 5. Нижня ліва (середня, напівпрозора)
+    drawCloud(size.width * 0.25 + moveX * 0.9, size.height * 0.85 + floatY5, 1.2, fade * 0.7);
   }
 
   @override

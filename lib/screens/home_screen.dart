@@ -131,15 +131,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _handleTempTap() {
     if (_showTempAnimation || _weather == null) return;
-
     setState(() {
       _showTempAnimation = true;
     });
 
-    Future.delayed(const Duration(seconds: 3), () {
+    // Синхронізуємо з тривалістю оверлею
+    Future.delayed(const Duration(milliseconds: 3500), () {
       if (mounted) {
         setState(() {
-          _showTempAnimation = false;
+          _showTempAnimation = false; // Запускає плавне повернення (fade-in) маленької іконки
         });
       }
     });
@@ -1154,18 +1154,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      AnimatedWeatherIcon(
-                                        key: _smallWeatherIconKey, // <-- Додаємо ключ сюди
-                                        iconCode: _weather!.iconCode,
-                                        size: 50,
-                                        partOfDay: _weather!.partOfDay,
+                                      AnimatedOpacity(
+                                        duration: const Duration(milliseconds: 400), // Плавність зникнення та появи
+                                        opacity: _showTempAnimation ? 0.0 : 1.0,
+                                        curve: Curves.easeInOut,
+                                        child: AnimatedWeatherIcon(
+                                          key: _smallWeatherIconKey,
+                                          iconCode: _weather!.iconCode,
+                                          size: 50,
+                                          partOfDay: _weather!.partOfDay,
+                                        ),
                                       ),
                                       const SizedBox(width: 10),
                                       Flexible(
                                         child: Text(
-                                          _cleanWeatherDescription(
-                                            _weather!.description,
-                                          ),
+                                          _cleanWeatherDescription(_weather!.description),
                                           style: const TextStyle(
                                             fontSize: 22,
                                             color: Colors.white,
