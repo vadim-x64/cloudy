@@ -124,7 +124,7 @@ class _HorizonSunPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2.5);
+    final center = Offset(size.width / 2, size.height / 2);
     final scale = 1.0 + math.sin(progress * math.pi) * 0.2;
     final baseRadius = size.width * 0.25 * scale;
 
@@ -187,9 +187,9 @@ class _SunPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2.5);
+    final center = Offset(size.width / 2, size.height / 2);
     final scale = 1.0 + math.sin(progress * math.pi) * 0.2;
-    final baseRadius = size.width * 0.25 * scale;
+    final baseRadius = size.width * 0.35 * scale;
 
     final glowPaint = Paint()
       ..color = Colors.orangeAccent.withOpacity(0.4)
@@ -233,39 +233,89 @@ class _MoonPainter extends CustomPainter {
     final rand = math.Random(42);
     final starPaint = Paint()..color = Colors.white;
 
+    // Зірки
     for (int i = 0; i < 50; i++) {
       double sx = rand.nextDouble() * size.width;
       double sy = rand.nextDouble() * size.height;
       double maxRadius = rand.nextDouble() * 2 + 1;
-
       double twinkle = (math.sin((progress * math.pi * 10) + i) + 1) / 2;
       starPaint.color = Colors.white.withOpacity(twinkle * 0.8 + 0.2);
 
       canvas.drawCircle(Offset(sx, sy), maxRadius, starPaint);
     }
 
-    final center = Offset(size.width / 2, size.height / 3);
-    final radius = size.width * 0.2;
+    final center = Offset(size.width / 2, size.height / 2);
 
+    // Пульсація
+    final pulse = math.sin(progress * math.pi * 2);
+    final scale = 1.0 + pulse * 0.03;
+    final radius = size.width * 0.35 * scale;
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(pulse * 0.05);
+
+    // 1. Світіння навколо (не обрізається)
     final glowPaint = Paint()
-      ..color = Colors.blue.shade100.withOpacity(0.2)
+      ..color = Colors.blue.shade100.withOpacity(0.2 + pulse * 0.05)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
-    canvas.drawCircle(center, radius * 1.3, glowPaint);
+    canvas.drawCircle(Offset.zero, radius * 1.2, glowPaint);
 
-    Path moonPath = Path()
-      ..addOval(Rect.fromCircle(center: center, radius: radius));
+    final moonBaseColor = const Color(0xFFE2E8F0);
+    final shadowColor = const Color(0xFFCBD5E1);
 
-    Path cutOut = Path()
-      ..addOval(
-        Rect.fromCircle(
-          center: Offset(center.dx + radius * 0.4, center.dy - radius * 0.3),
-          radius: radius * 0.9,
-        ),
+    // 2. Основний диск
+    final moonPaint = Paint()..color = moonBaseColor;
+    canvas.drawCircle(Offset.zero, radius, moonPaint);
+
+    // --- ПОЧАТОК ОБРІЗКИ (КЛІПІНГУ) ---
+    // Все, що малюється нижче, не вийде за межі радіуса місяця
+    canvas.save();
+    canvas.clipPath(Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: radius)));
+
+    // Внутрішня тінь місяця для об'єму
+    final moonShadowPaint = Paint()
+      ..color = shadowColor.withOpacity(0.7)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+    canvas.drawCircle(Offset(radius * 0.15, radius * 0.15), radius * 0.85, moonShadowPaint);
+
+    // 3. Функція малювання хаотичних кратерів (овали з нахилом)
+    void drawIrregularCrater(double x, double y, double w, double h, double angle) {
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.rotate(angle);
+
+      // Темна основа (тінь кратера)
+      canvas.drawOval(
+          Rect.fromCenter(center: Offset.zero, width: w, height: h),
+          Paint()..color = shadowColor
       );
 
-    Path finalMoon = Path.combine(PathOperation.difference, moonPath, cutOut);
+      // Світле дно (зміщене для глибини)
+      canvas.drawOval(
+          Rect.fromCenter(center: Offset(w * 0.1, h * 0.15), width: w * 0.85, height: h * 0.85),
+          Paint()..color = moonBaseColor
+      );
 
-    canvas.drawPath(finalMoon, Paint()..color = Colors.blueGrey.shade100);
+      canvas.restore();
+    }
+
+    // Розкидаємо кратери: координати, ширина, висота, кут нахилу
+    // Тепер вони є і на краях, різних форм і розмірів
+    drawIrregularCrater(-radius * 0.5, -radius * 0.6, radius * 0.45, radius * 0.3, -0.2);
+    drawIrregularCrater(radius * 0.6, -radius * 0.4, radius * 0.35, radius * 0.5, 0.4);
+    drawIrregularCrater(-radius * 0.75, radius * 0.1, radius * 0.5, radius * 0.25, 0.5);
+    drawIrregularCrater(radius * 0.1, -radius * 0.2, radius * 0.25, radius * 0.18, 0.0);
+    drawIrregularCrater(radius * 0.45, radius * 0.65, radius * 0.6, radius * 0.3, -0.3);
+    drawIrregularCrater(-radius * 0.2, radius * 0.55, radius * 0.35, radius * 0.2, 0.1);
+    drawIrregularCrater(radius * 0.8, radius * 0.2, radius * 0.4, radius * 0.6, 0.2);
+    drawIrregularCrater(-radius * 0.1, -radius * 0.8, radius * 0.3, radius * 0.2, 0.1);
+
+    // Відновлюємо canvas після кліпінгу
+    canvas.restore();
+
+    // Відновлюємо canvas після загального translate/rotate
+    canvas.restore();
   }
 
   @override
