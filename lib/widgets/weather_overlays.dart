@@ -455,33 +455,25 @@ class _FogPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(
-        BlurStyle.normal,
-        1,
-      );
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 100.0);
 
     for (int i = 0; i < 4; i++) {
-      double yBase =
-          size.height * (0.2 + i * 0.2);
-      double phase =
-          (progress * math.pi * 2) +
-          (i * 1.5);
-      double amplitude = 20.0 + (i * 5.0);
-      double frequency = 0.008 + (i * 0.002);
+      double phaseX = (progress * math.pi * 2) + (i * 2.0);
+      double phaseY = (progress * math.pi * 1.5) + (i * 1.5);
 
-      Path path = Path();
-      path.moveTo(-50, yBase + math.sin(phase) * amplitude);
+      double x = size.width * 0.5 + math.sin(phaseX) * (size.width * 0.6);
+      double y = size.height * (0.15 + i * 0.12) + math.cos(phaseY) * (size.height * 0.15);
 
-      for (double x = 0; x <= size.width + 50; x += 20) {
-        double y = yBase + math.sin((x * frequency) + phase) * amplitude;
-        path.lineTo(x, y);
-      }
+      double w = size.width * 2.2;
+      double h = size.height * 0.45;
 
-      paint.strokeWidth = 40.0 + (i * 15.0);
-      paint.color = Colors.white.withOpacity(0.2 + (i % 2) * 0.15);
-      canvas.drawPath(path, paint);
+      paint.color = Colors.white.withOpacity(0.25 + (i % 3) * 0.15);
+
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(x, y), width: w, height: h),
+        paint,
+      );
     }
   }
 

@@ -14,6 +14,7 @@ import '../widgets/weather_overlays.dart';
 import '../widgets/ai_chat_modal.dart';
 import '../widgets/weather_map_modal.dart';
 import '../widgets/tutorial_overlay.dart';
+import 'dart:math' as math;
 
 enum TempUnit { celsius, fahrenheit, kelvin }
 
@@ -646,6 +647,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
+  bool get _showAurora {
+    if (_weather == null) return false;
+    bool isCold = _weather!.temperature <= 10.0;
+    bool isNight = _weather!.partOfDay == 'Ніч' || _weather!.partOfDay == 'Сутінки';
+    return isCold && isNight;
+  }
+
   @override
   Widget build(BuildContext context) {
     String? bgLottie = _getBackgroundLottie();
@@ -691,6 +699,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
+              ),
+            ),
+            AnimatedOpacity(
+              opacity: _showAurora ? 1.0 : 0.0,
+              duration: const Duration(seconds: 2),
+              child: const IgnorePointer(
+                child: AuroraOverlay(),
               ),
             ),
             if (bgLottie != null)
@@ -2002,4 +2017,78 @@ class _TypewriterTextState extends State<TypewriterText>
       },
     );
   }
+}
+
+class AuroraOverlay extends StatefulWidget {
+  const AuroraOverlay({super.key});
+
+  @override
+  State<AuroraOverlay> createState() => _AuroraOverlayState();
+}
+
+class _AuroraOverlayState extends State<AuroraOverlay> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.55,
+      width: double.infinity,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            painter: AuroraPainter(_controller.value),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class AuroraPainter extends CustomPainter {
+  final double progress;
+  AuroraPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 45.0);
+
+    for (int i = 0; i < 4; i++) {
+      final path = Path();
+      final yOffset = size.height * 0.15 + (i * 35);
+      final amplitude = 30.0 + (i * 15);
+      final phase = (progress * 2 * math.pi) + (i * 1.5);
+
+      path.moveTo(-50, yOffset);
+      for (double x = 0; x <= size.width + 50; x += 20) {
+        double y = yOffset + math.sin((x * 0.008) + phase) * amplitude;
+        path.lineTo(x, y);
+      }
+
+      paint.color = (i % 2 == 0 ? Colors.greenAccent : Colors.tealAccent)
+          .withOpacity(0.35 - (i * 0.06));
+      paint.strokeWidth = 70.0 - (i * 10);
+
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant AuroraPainter oldDelegate) => true;
 }
