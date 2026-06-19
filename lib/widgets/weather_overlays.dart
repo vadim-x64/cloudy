@@ -95,12 +95,11 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
       if (partOfDay == 'Світанок' || partOfDay == 'Вечір') {
         return _HorizonSunPainter(progress, isSunset: partOfDay == 'Вечір');
       }
-      return iconCode.contains('d')
-          ? _SunPainter(progress)
-          : _MoonPainter(progress);
-    } else if (iconCode.startsWith('02') ||
-        iconCode.startsWith('03') ||
-        iconCode.startsWith('04')) {
+      return iconCode.contains('d') ? _SunPainter(progress) : _MoonPainter(progress);
+    } else if (iconCode.startsWith('02')) {
+      // Додаємо окремий painter для мінливої хмарності (сонце/місяць + хмарки)
+      return _PartlyCloudyPainter(progress, isNight: iconCode.contains('n'), partOfDay: partOfDay);
+    } else if (iconCode.startsWith('03') || iconCode.startsWith('04')) {
       return _CloudPainter(progress, isNight: iconCode.contains('n'));
     } else if (iconCode.startsWith('09') || iconCode.startsWith('10')) {
       return _RainPainter(progress);
@@ -506,4 +505,35 @@ class _FogPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FogPainter oldDelegate) => true;
+}
+
+class _PartlyCloudyPainter extends CustomPainter {
+  final double progress;
+  final bool isNight;
+  final String partOfDay;
+
+  _PartlyCloudyPainter(this.progress, {required this.isNight, required this.partOfDay});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 1. Малюємо Сонце або Місяць на задньому плані (трохи зміщені та зменшені)
+    canvas.save();
+    canvas.translate(size.width * 0.15, -size.height * 0.1);
+    canvas.scale(0.85);
+
+    if (isNight) {
+      _MoonPainter(progress).paint(canvas, size);
+    } else if (partOfDay == 'Світанок' || partOfDay == 'Вечір') {
+      _HorizonSunPainter(progress, isSunset: partOfDay == 'Вечір').paint(canvas, size);
+    } else {
+      _SunPainter(progress).paint(canvas, size);
+    }
+    canvas.restore();
+
+    // 2. Малюємо хмарки поверх світила
+    _CloudPainter(progress, isNight: isNight).paint(canvas, size);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PartlyCloudyPainter oldDelegate) => true;
 }

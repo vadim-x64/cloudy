@@ -673,7 +673,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 borderRadius: BorderRadius.circular(200),
                 side: BorderSide(color: Colors.white.withOpacity(0.6)),
               ),
-              child: const Icon(Icons.auto_awesome, color: Colors.white),
+              child: const AnimatedAiIcon(),
             ),
           ),
         )
@@ -1641,6 +1641,89 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class AnimatedAiIcon extends StatefulWidget {
+  const AnimatedAiIcon({super.key});
+
+  @override
+  State<AnimatedAiIcon> createState() => _AnimatedAiIconState();
+}
+
+class _AnimatedAiIconState extends State<AnimatedAiIcon> {
+  int _currentIndex = 0;
+
+  // Масив іконок
+  final List<IconData> _icons = [
+    Icons.auto_awesome,               // сяйво/магія
+    Icons.lightbulb_outline_rounded,  // ідея
+    Icons.access_time_rounded,        // час
+    Icons.chat_bubble_outline_rounded,// чат
+    Icons.help_outline_rounded,       // питання
+    Icons.edit_rounded,               // ручка/редагування
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _startIconLoop();
+  }
+
+  void _startIconLoop() async {
+    while (mounted) {
+      // Зменшено затримку для більшої динаміки (2 секунди замість 3)
+      await Future.delayed(const Duration(milliseconds: 2000));
+      if (mounted) {
+        setState(() {
+          _currentIndex = (_currentIndex + 1) % _icons.length;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      // Тривалість самої анімації переходу
+      duration: const Duration(milliseconds: 500),
+      reverseDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        // 1. Анімація масштабу з пружинним ефектом (bounce)
+        final scaleAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack, // Вистрибує трохи більше свого розміру і стає на місце
+          reverseCurve: Curves.easeInBack, // Зтискається перед зникненням
+        );
+
+        // 2. Легкий ефект закручування (твіст)
+        final rotateAnimation = Tween<double>(begin: -0.15, end: 0.0).animate(
+            CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutQuart,
+            )
+        );
+
+        return ScaleTransition(
+          scale: scaleAnimation,
+          child: RotationTransition(
+            turns: rotateAnimation,
+            child: FadeTransition(
+              // Прозорість міняємо лінійно, щоб не було артефактів
+              opacity: animation,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: Icon(
+        _icons[_currentIndex],
+        // ValueKey обов'язковий, щоб Flutter розумів, що іконка змінилась
+        key: ValueKey<int>(_currentIndex),
+        color: Colors.white,
+        size: 26, // Зробив трохи більшою, щоб пружина виглядала ефектніше
       ),
     );
   }
