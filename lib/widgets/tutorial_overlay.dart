@@ -16,20 +16,23 @@ class TutorialStep {
 class TutorialOverlay extends StatefulWidget {
   final List<TutorialStep> steps;
   final VoidCallback onComplete;
+  final String partOfDay;
 
   const TutorialOverlay({
     super.key,
     required this.steps,
     required this.onComplete,
+    required this.partOfDay,
   });
 
-  static void show(BuildContext context, List<TutorialStep> steps) {
+  static void show(BuildContext context, List<TutorialStep> steps, String partOfDay) {
     OverlayState? overlayState = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
       builder: (context) => TutorialOverlay(
         steps: steps,
+        partOfDay: partOfDay,
         onComplete: () {
           overlayEntry.remove();
         },
@@ -110,6 +113,26 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
     }
   }
 
+  Map<String, Color> _getThemeColors() {
+    switch (widget.partOfDay) {
+      case 'Світанок':
+        return {'bg': const Color(0xFF3E1F00), 'accent': Colors.orangeAccent};
+      case 'Ранок':
+        return {'bg': const Color(0xFF0D3B31), 'accent': Colors.greenAccent};
+      case 'День':
+        return {'bg': const Color(0xFF0D2A4A), 'accent': Colors.lightBlueAccent};
+      case 'Полудень':
+        return {'bg': const Color(0xFF1A237E), 'accent': Colors.blueAccent};
+      case 'Вечір':
+        return {'bg': const Color(0xFF4A1500), 'accent': Colors.deepOrangeAccent};
+      case 'Сутінки':
+        return {'bg': const Color(0xFF1E0033), 'accent': Colors.purpleAccent};
+      case 'Ніч':
+      default:
+        return {'bg': const Color(0xFF10092B), 'accent': Colors.indigoAccent};
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_targetRect == Rect.zero) return const SizedBox.shrink();
@@ -117,6 +140,10 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
     final step = widget.steps[_currentStep];
     final screenSize = MediaQuery.of(context).size;
     final isTopHalf = _targetRect.center.dy < screenSize.height / 2;
+
+    final theme = _getThemeColors();
+    final bgColor = theme['bg']!;
+    final accentColor = theme['accent']!;
 
     return Material(
       color: Colors.transparent,
@@ -137,6 +164,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                       painter: _OverlayCutoutPainter(
                         cutout: rect ?? _targetRect,
                         pulseValue: _pulseController.value,
+                        accentColor: accentColor,
                       ),
                     );
                   },
@@ -166,12 +194,12 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF10092B).withValues(alpha: 0.7),
+                      color: bgColor.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.5), width: 1.5),
+                      border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 1.5),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.blueAccent.withValues(alpha: 0.2),
+                          color: accentColor.withValues(alpha: 0.2),
                           blurRadius: 20,
                           spreadRadius: -5,
                         ),
@@ -198,7 +226,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.auto_awesome, color: Colors.blueAccent, size: 24),
+                              Icon(Icons.auto_awesome, color: accentColor, size: 24),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
@@ -240,7 +268,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                               ElevatedButton(
                                 onPressed: _nextStep,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blueAccent,
+                                  backgroundColor: accentColor,
                                   foregroundColor: Colors.white,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
@@ -272,8 +300,13 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
 class _OverlayCutoutPainter extends CustomPainter {
   final Rect cutout;
   final double pulseValue;
+  final Color accentColor;
 
-  _OverlayCutoutPainter({required this.cutout, required this.pulseValue});
+  _OverlayCutoutPainter({
+    required this.cutout,
+    required this.pulseValue,
+    required this.accentColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -288,7 +321,7 @@ class _OverlayCutoutPainter extends CustomPainter {
     canvas.drawPath(finalPath, backgroundPaint);
 
     final glowPaint = Paint()
-      ..color = Colors.blueAccent.withValues(alpha: 0.3 + (pulseValue * 0.4))
+      ..color = accentColor.withValues(alpha: 0.3 + (pulseValue * 0.4))
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3 + (pulseValue * 2)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
@@ -304,6 +337,8 @@ class _OverlayCutoutPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _OverlayCutoutPainter oldDelegate) {
-    return oldDelegate.cutout != cutout || oldDelegate.pulseValue != pulseValue;
+    return oldDelegate.cutout != cutout ||
+        oldDelegate.pulseValue != pulseValue ||
+        oldDelegate.accentColor != accentColor;
   }
 }

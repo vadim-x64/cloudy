@@ -124,7 +124,7 @@ class _HorizonSunPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final scale = 1.0 + math.sin(progress * math.pi) * 0.2;
-    final baseRadius = size.width * 0.25 * scale;
+    final baseRadius = size.width * 0.30 * scale;
 
     final sunColor = isSunset ? Colors.deepOrangeAccent : Colors.amber;
     final glowColor = isSunset ? Colors.deepOrange : Colors.orangeAccent;
@@ -187,7 +187,7 @@ class _SunPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final scale = 1.0 + math.sin(progress * math.pi) * 0.2;
-    final baseRadius = size.width * 0.35 * scale;
+    final baseRadius = size.width * 0.30 * scale;
 
     final glowPaint = Paint()
       ..color = Colors.orangeAccent.withOpacity(0.4)
@@ -244,7 +244,7 @@ class _MoonPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final pulse = math.sin(progress * math.pi * 2);
     final scale = 1.0 + pulse * 0.03;
-    final radius = size.width * 0.35 * scale;
+    final radius = size.width * 0.30 * scale;
 
     canvas.save();
     canvas.translate(center.dx, center.dy);

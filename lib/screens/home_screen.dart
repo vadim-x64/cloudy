@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             title: 'ШІ-Асистент',
             description: 'Ваш персональний метеоролог! Запитуйте поради щодо одягу або парасолі.',
           ),
-        ]);
+        ], _weather!.partOfDay);
       });
     }
   }
@@ -1070,8 +1070,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                         color: Colors.white,
                                                       ),
                                                       maxLines: 1,
-                                                      overflow:
-                                                      TextOverflow.ellipsis,
+                                                      overflow: TextOverflow.ellipsis,
                                                     ),
                                                   ),
                                                 ],
