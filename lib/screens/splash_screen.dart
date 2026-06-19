@@ -64,10 +64,25 @@ class _SplashScreenState extends State<SplashScreen>
     if (mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 1000),
+          transitionDuration: const Duration(milliseconds: 1200),
+          reverseTransitionDuration: const Duration(milliseconds: 1200),
           pageBuilder: (_, __, ___) => const HomeScreen(),
           transitionsBuilder: (_, animation, __, child) {
-            return FadeTransition(opacity: animation, child: child);
+
+            final curvedAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeInOutCubic,
+            );
+
+            final scaleTween = Tween<double>(begin: 0.96, end: 1.0);
+
+            return FadeTransition(
+              opacity: curvedAnimation,
+              child: ScaleTransition(
+                scale: scaleTween.animate(curvedAnimation),
+                child: child,
+              ),
+            );
           },
         ),
       );
@@ -99,7 +114,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 );
               },
-              child: Image.asset('assets/logo.png', width: 400, height: 400),
+              child: Image.asset('assets/logo.png', width: 350, height: 350),
             ),
             AnimatedBuilder(
               animation: _controller,
@@ -107,8 +122,7 @@ class _SplashScreenState extends State<SplashScreen>
                 return Opacity(
                   opacity: _textOpacity.value,
                   child: Transform.translate(
-
-                    offset: Offset(0, _textMove.value - 100),
+                    offset: Offset(0, _textMove.value - 80),
                     child: child,
                   ),
                 );
@@ -116,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: const Text(
                 'Cloudy',
                 style: TextStyle(
-                  fontSize: 52,
+                  fontSize: 56,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   letterSpacing: 3.0,
