@@ -1656,14 +1656,13 @@ class AnimatedAiIcon extends StatefulWidget {
 class _AnimatedAiIconState extends State<AnimatedAiIcon> {
   int _currentIndex = 0;
 
-  // Масив іконок
   final List<IconData> _icons = [
-    Icons.auto_awesome,               // сяйво/магія
-    Icons.lightbulb_outline_rounded,  // ідея
-    Icons.access_time_rounded,        // час
-    Icons.chat_bubble_outline_rounded,// чат
-    Icons.help_outline_rounded,       // питання
-    Icons.edit_rounded,               // ручка/редагування
+    Icons.auto_awesome,
+    Icons.lightbulb_outline_rounded,
+    Icons.access_time_rounded,
+    Icons.chat_bubble_outline_rounded,
+    Icons.help_outline_rounded,
+    Icons.edit_rounded,
   ];
 
   @override
@@ -1674,7 +1673,6 @@ class _AnimatedAiIconState extends State<AnimatedAiIcon> {
 
   void _startIconLoop() async {
     while (mounted) {
-      // Зменшено затримку для більшої динаміки (2 секунди замість 3)
       await Future.delayed(const Duration(milliseconds: 2000));
       if (mounted) {
         setState(() {
@@ -1687,18 +1685,15 @@ class _AnimatedAiIconState extends State<AnimatedAiIcon> {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      // Тривалість самої анімації переходу
       duration: const Duration(milliseconds: 500),
       reverseDuration: const Duration(milliseconds: 400),
       transitionBuilder: (Widget child, Animation<double> animation) {
-        // 1. Анімація масштабу з пружинним ефектом (bounce)
         final scaleAnimation = CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutBack, // Вистрибує трохи більше свого розміру і стає на місце
-          reverseCurve: Curves.easeInBack, // Зтискається перед зникненням
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInBack,
         );
 
-        // 2. Легкий ефект закручування (твіст)
         final rotateAnimation = Tween<double>(begin: -0.15, end: 0.0).animate(
             CurvedAnimation(
               parent: animation,
@@ -1711,7 +1706,6 @@ class _AnimatedAiIconState extends State<AnimatedAiIcon> {
           child: RotationTransition(
             turns: rotateAnimation,
             child: FadeTransition(
-              // Прозорість міняємо лінійно, щоб не було артефактів
               opacity: animation,
               child: child,
             ),
@@ -1720,10 +1714,9 @@ class _AnimatedAiIconState extends State<AnimatedAiIcon> {
       },
       child: Icon(
         _icons[_currentIndex],
-        // ValueKey обов'язковий, щоб Flutter розумів, що іконка змінилась
         key: ValueKey<int>(_currentIndex),
         color: Colors.white,
-        size: 26, // Зробив трохи більшою, щоб пружина виглядала ефектніше
+        size: 26,
       ),
     );
   }

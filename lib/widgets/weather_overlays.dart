@@ -97,7 +97,6 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
       }
       return iconCode.contains('d') ? _SunPainter(progress) : _MoonPainter(progress);
     } else if (iconCode.startsWith('02')) {
-      // Додаємо окремий painter для мінливої хмарності (сонце/місяць + хмарки)
       return _PartlyCloudyPainter(progress, isNight: iconCode.contains('n'), partOfDay: partOfDay);
     } else if (iconCode.startsWith('03') || iconCode.startsWith('04')) {
       return _CloudPainter(progress, isNight: iconCode.contains('n'));
@@ -232,7 +231,6 @@ class _MoonPainter extends CustomPainter {
     final rand = math.Random(42);
     final starPaint = Paint()..color = Colors.white;
 
-    // Зірки
     for (int i = 0; i < 50; i++) {
       double sx = rand.nextDouble() * size.width;
       double sy = rand.nextDouble() * size.height;
@@ -244,8 +242,6 @@ class _MoonPainter extends CustomPainter {
     }
 
     final center = Offset(size.width / 2, size.height / 2);
-
-    // Пульсація
     final pulse = math.sin(progress * math.pi * 2);
     final scale = 1.0 + pulse * 0.03;
     final radius = size.width * 0.35 * scale;
@@ -254,7 +250,6 @@ class _MoonPainter extends CustomPainter {
     canvas.translate(center.dx, center.dy);
     canvas.rotate(pulse * 0.05);
 
-    // 1. Світіння навколо (не обрізається)
     final glowPaint = Paint()
       ..color = Colors.blue.shade100.withOpacity(0.2 + pulse * 0.05)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
@@ -262,35 +257,27 @@ class _MoonPainter extends CustomPainter {
 
     final moonBaseColor = const Color(0xFFE2E8F0);
     final shadowColor = const Color(0xFFCBD5E1);
-
-    // 2. Основний диск
     final moonPaint = Paint()..color = moonBaseColor;
-    canvas.drawCircle(Offset.zero, radius, moonPaint);
 
-    // --- ПОЧАТОК ОБРІЗКИ (КЛІПІНГУ) ---
-    // Все, що малюється нижче, не вийде за межі радіуса місяця
+    canvas.drawCircle(Offset.zero, radius, moonPaint);
     canvas.save();
     canvas.clipPath(Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: radius)));
 
-    // Внутрішня тінь місяця для об'єму
     final moonShadowPaint = Paint()
       ..color = shadowColor.withOpacity(0.7)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
     canvas.drawCircle(Offset(radius * 0.15, radius * 0.15), radius * 0.85, moonShadowPaint);
 
-    // 3. Функція малювання хаотичних кратерів (овали з нахилом)
     void drawIrregularCrater(double x, double y, double w, double h, double angle) {
       canvas.save();
       canvas.translate(x, y);
       canvas.rotate(angle);
 
-      // Темна основа (тінь кратера)
       canvas.drawOval(
           Rect.fromCenter(center: Offset.zero, width: w, height: h),
           Paint()..color = shadowColor
       );
 
-      // Світле дно (зміщене для глибини)
       canvas.drawOval(
           Rect.fromCenter(center: Offset(w * 0.1, h * 0.15), width: w * 0.85, height: h * 0.85),
           Paint()..color = moonBaseColor
@@ -299,8 +286,6 @@ class _MoonPainter extends CustomPainter {
       canvas.restore();
     }
 
-    // Розкидаємо кратери: координати, ширина, висота, кут нахилу
-    // Тепер вони є і на краях, різних форм і розмірів
     drawIrregularCrater(-radius * 0.5, -radius * 0.6, radius * 0.45, radius * 0.3, -0.2);
     drawIrregularCrater(radius * 0.6, -radius * 0.4, radius * 0.35, radius * 0.5, 0.4);
     drawIrregularCrater(-radius * 0.75, radius * 0.1, radius * 0.5, radius * 0.25, 0.5);
@@ -310,10 +295,7 @@ class _MoonPainter extends CustomPainter {
     drawIrregularCrater(radius * 0.8, radius * 0.2, radius * 0.4, radius * 0.6, 0.2);
     drawIrregularCrater(-radius * 0.1, -radius * 0.8, radius * 0.3, radius * 0.2, 0.1);
 
-    // Відновлюємо canvas після кліпінгу
     canvas.restore();
-
-    // Відновлюємо canvas після загального translate/rotate
     canvas.restore();
   }
 
@@ -516,7 +498,6 @@ class _PartlyCloudyPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Малюємо Сонце або Місяць на задньому плані (трохи зміщені та зменшені)
     canvas.save();
     canvas.translate(size.width * 0.15, -size.height * 0.1);
     canvas.scale(0.85);
@@ -530,7 +511,6 @@ class _PartlyCloudyPainter extends CustomPainter {
     }
     canvas.restore();
 
-    // 2. Малюємо хмарки поверх світила
     _CloudPainter(progress, isNight: isNight).paint(canvas, size);
   }
 
