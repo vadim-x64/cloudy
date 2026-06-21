@@ -125,14 +125,13 @@ class _HorizonSunPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final scale = 1.0 + math.sin(progress * math.pi) * 0.2;
     final baseRadius = size.width * 0.30 * scale;
-
     final sunColor = isSunset ? Colors.deepOrangeAccent : Colors.amber;
     final glowColor = isSunset ? Colors.deepOrange : Colors.orangeAccent;
-
     final horizonY = center.dy + baseRadius * 0.2;
+    final lineThickness = size.width * 0.02;
 
     canvas.save();
-    canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY));
+    canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY - (lineThickness / 2)));
 
     final glowPaint = Paint()
       ..color = glowColor.withOpacity(0.4)
@@ -150,7 +149,6 @@ class _HorizonSunPainter extends CustomPainter {
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(progress * math.pi * 0.5 * (isSunset ? 1 : -1));
-
     for (int i = 0; i < 8; i++) {
       canvas.rotate((2 * math.pi) / 8);
       canvas.drawLine(
@@ -164,7 +162,7 @@ class _HorizonSunPainter extends CustomPainter {
 
     final horizonPaint = Paint()
       ..color = sunColor.withOpacity(0.8)
-      ..strokeWidth = size.width * 0.02
+      ..strokeWidth = lineThickness
       ..strokeCap = StrokeCap.round;
 
     canvas.drawLine(

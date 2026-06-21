@@ -246,28 +246,27 @@ class WeatherIconPainter extends CustomPainter {
   }
 
   void _drawHorizonSun(
-    Canvas canvas,
-    Size size,
-    Offset center, {
-    bool isPartial = false,
-    bool isSunset = false,
-  }) {
+      Canvas canvas,
+      Size size,
+      Offset center, {
+        bool isPartial = false,
+        bool isSunset = false,
+      }) {
     final double radius = size.width * (isPartial ? 0.2 : 0.25);
     final Offset sunCenter = isPartial
         ? Offset(size.width * 0.65, size.height * 0.35)
         : center;
-
     final Offset adjustedCenter = Offset(
       sunCenter.dx,
       sunCenter.dy + radius * 0.4,
     );
-
     final double horizonY = adjustedCenter.dy + radius * 0.2;
     final Color sunColor = isSunset ? Colors.deepOrangeAccent : Colors.amber;
     final Color glowColor = isSunset ? Colors.deepOrange : Colors.orangeAccent;
+    final double lineThickness = size.width * 0.02;
 
     canvas.save();
-    canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY));
+    canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY - (lineThickness / 2)));
 
     final glowPaint = Paint()..color = glowColor.withOpacity(0.5);
     canvas.drawCircle(adjustedCenter, radius * 1.3, glowPaint);
@@ -287,7 +286,6 @@ class WeatherIconPainter extends CustomPainter {
     canvas.save();
     canvas.translate(adjustedCenter.dx, adjustedCenter.dy);
     canvas.rotate(animationValue * pi * 0.5 * (isSunset ? 1 : -1));
-
     for (int i = 0; i < rayCount; i++) {
       canvas.rotate((2 * pi) / rayCount);
       canvas.drawLine(
@@ -301,7 +299,7 @@ class WeatherIconPainter extends CustomPainter {
 
     final horizonPaint = Paint()
       ..color = sunColor.withOpacity(0.8)
-      ..strokeWidth = size.width * 0.02
+      ..strokeWidth = lineThickness
       ..strokeCap = StrokeCap.round;
 
     double hWidth = radius * 1.8;
