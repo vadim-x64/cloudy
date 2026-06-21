@@ -15,6 +15,7 @@ import '../widgets/ai_chat_modal.dart';
 import '../widgets/weather_map_modal.dart';
 import '../widgets/tutorial_overlay.dart';
 import 'dart:math' as math;
+import 'app_info_screen.dart';
 
 enum TempUnit { celsius, fahrenheit, kelvin }
 
@@ -920,6 +921,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                               ),
                                             );
                                           }
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.info_outline, color: Colors.white, size: 22),
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                            PageRouteBuilder(
+                                              transitionDuration: const Duration(milliseconds: 500),
+                                              reverseTransitionDuration: const Duration(milliseconds: 500),
+                                              pageBuilder: (context, animation, secondaryAnimation) => AppInfoScreen(
+                                                backgroundColors: _getBackgroundColors(),
+                                                partOfDay: _weather?.partOfDay ?? 'День',
+                                              ),
+                                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                                final curvedAnimation = CurvedAnimation(
+                                                  parent: animation,
+                                                  curve: Curves.easeInOutCubic,
+                                                );
+                                                return SlideTransition(
+                                                  position: Tween<Offset>(
+                                                    begin: const Offset(1.0, 0.0),
+                                                    end: Offset.zero,
+                                                  ).animate(curvedAnimation),
+                                                  child: child,
+                                                );
+                                              },
+                                            ),
+                                          );
                                         },
                                       ),
                                     ],
