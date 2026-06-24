@@ -23,7 +23,7 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
   late AnimationController _controller;
   Animation<double>? _scaleAnimation;
   Animation<Offset>? _translateAnimation;
-  Animation<double>? _morphAnimation; // Додаємо анімацію для морфінгу
+  Animation<double>? _morphAnimation;
 
   @override
   void initState() {
@@ -87,17 +87,16 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
             weight: 20),
       ]).animate(_controller);
 
-      // Налаштовуємо плавний перехід (морфінг) від маленької іконки до великої
       _morphAnimation = TweenSequence<double>([
         TweenSequenceItem(
             tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut)),
-            weight: 15), // Проявляється у перші 15% часу
+            weight: 15),
         TweenSequenceItem(
             tween: ConstantTween(1.0),
             weight: 70),
         TweenSequenceItem(
             tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeInOut)),
-            weight: 15), // Зникає в останні 15% часу
+            weight: 15),
       ]).animate(_controller);
     });
 
@@ -129,20 +128,16 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Маленька іконка, яка летить і плавно зникає
                 Opacity(
                   opacity: 1.0 - _morphAnimation!.value,
                   child: Center(
                     child: AnimatedWeatherIcon(
                       iconCode: widget.iconCode,
-                      // Математика: задаємо такий базовий розмір, щоб при множенні
-                      // на startScale він ідеально збігся з оригінальною іконкою 50px
                       size: screenWidth / 1.1,
                       partOfDay: widget.partOfDay,
                     ),
                   ),
                 ),
-                // Повноекранна кастомна анімація, яка летить і плавно з'являється
                 Opacity(
                   opacity: _morphAnimation!.value,
                   child: CustomPaint(

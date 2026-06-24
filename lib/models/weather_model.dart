@@ -28,23 +28,23 @@ int _getWeatherPriority(String icon) {
   final code = icon.replaceAll('d', '').replaceAll('n', '');
   switch (code) {
     case '11':
-      return 7; // Thunderstorm
+      return 7;
     case '13':
-      return 6; // Snow
+      return 6;
     case '09':
-      return 5; // Shower rain
+      return 5;
     case '10':
-      return 4; // Rain
+      return 4;
     case '50':
-      return 3; // Mist/Fog
+      return 3;
     case '04':
-      return 2; // Broken clouds
+      return 2;
     case '03':
-      return 1; // Scattered clouds
+      return 1;
     case '02':
-      return 0; // Few clouds
+      return 0;
     case '01':
-      return -1; // Clear
+      return -1;
     default:
       return -2;
   }
@@ -119,7 +119,6 @@ class WeatherModel {
       isUtc: true,
     ).add(Duration(seconds: timezoneOffset));
 
-    // FIX: Fallback to 3h if 1h is not provided by the API
     double precip = 0.0;
     if (currentJson['rain'] != null) {
       precip =
@@ -140,7 +139,6 @@ class WeatherModel {
       parsedAqi = aqiJson['list'][0]['main']['aqi'] ?? 1;
     }
 
-    // FIX: Find the most severe current weather condition
     var currentWeathers = currentJson['weather'] as List;
     var bestCurrentWeather = currentWeathers[0];
     for (var w in currentWeathers) {
@@ -163,7 +161,6 @@ class WeatherModel {
           isUtc: true,
         ).add(Duration(seconds: timezoneOffset));
 
-        // Find most severe weather for this specific hourly block
         var itemWeathers = item['weather'] as List;
         var bestItemWeather = itemWeathers[0];
         for (var w in itemWeathers) {
@@ -204,7 +201,6 @@ class WeatherModel {
           if (temp > dailyMap[dateKey]!.maxTemp)
             dailyMap[dateKey]!.maxTemp = temp;
 
-          // FIX: Overwrite daily icon if the new block has more severe weather
           if (_getWeatherPriority(normalizedIcon) >
               _getWeatherPriority(dailyMap[dateKey]!.iconCode)) {
             dailyMap[dateKey]!.iconCode = normalizedIcon;

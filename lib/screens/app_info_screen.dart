@@ -18,7 +18,6 @@ class AppInfoScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Адаптивний фоновий градієнт, успадкований з головного екрана
           AnimatedContainer(
             duration: const Duration(milliseconds: 500),
             width: double.infinity,
@@ -31,7 +30,6 @@ class AppInfoScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Додатковий ефект розмиття для фонового контенту
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -81,7 +79,6 @@ class AppInfoScreen extends StatelessWidget {
   }
 
   Widget _buildSliverAppBar(BuildContext context) {
-    // Отримуємо перший колір поточного градієнта для безшовного вигляду
     final appBarColor = backgroundColors.isNotEmpty
         ? backgroundColors.first.withOpacity(0.92)
         : Colors.blueGrey.shade900.withOpacity(0.92);
@@ -91,11 +88,9 @@ class AppInfoScreen extends StatelessWidget {
         icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
         onPressed: () => Navigator.of(context).pop(),
       ),
-      // Встановлюємо напівпрозорий колір замість прозорого
       backgroundColor: appBarColor,
       elevation: 4,
       shadowColor: Colors.black38,
-      // Вимикаємо стандартне тонування Material 3 при скролі
       surfaceTintColor: Colors.transparent,
       pinned: true,
       expandedHeight: 100,
@@ -144,7 +139,6 @@ class AppInfoScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      // Використовуємо FutureBuilder для отримання версії з pubspec.yaml
                       FutureBuilder<PackageInfo>(
                         future: PackageInfo.fromPlatform(),
                         builder: (context, snapshot) {
