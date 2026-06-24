@@ -1260,10 +1260,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      AnimatedOpacity(
-                                        duration: const Duration(milliseconds: 400),
+                                      Opacity(
                                         opacity: _showTempAnimation ? 0.0 : 1.0,
-                                        curve: Curves.easeInOut,
                                         child: AnimatedWeatherIcon(
                                           key: _smallWeatherIconKey,
                                           iconCode: _weather!.iconCode,

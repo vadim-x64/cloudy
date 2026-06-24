@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'animated_weather_icon.dart';
 
 class WeatherOverlayManager extends StatefulWidget {
   final String iconCode;
@@ -20,39 +21,87 @@ class WeatherOverlayManager extends StatefulWidget {
 class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  Alignment _originAlignment = const Alignment(0.0, 0.5);
+  Animation<double>? _scaleAnimation;
+  Animation<Offset>? _translateAnimation;
+  Animation<double>? _morphAnimation; // Додаємо анімацію для морфінгу
 
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3500),
-    )..forward();
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _calculateOrigin();
+      _calculateOriginAndStart();
     });
   }
 
-  void _calculateOrigin() {
+  void _calculateOriginAndStart() {
+    if (!mounted) return;
+
+    double startScale = 0.1;
+    Offset startTranslation = Offset.zero;
+
     if (widget.sourceKey?.currentContext != null) {
       final RenderBox box = widget.sourceKey!.currentContext!.findRenderObject() as RenderBox;
       final Offset position = box.localToGlobal(Offset.zero);
       final Size screenSize = MediaQuery.of(context).size;
-      final double centerX = position.dx + box.size.width / 2;
-      final double centerY = position.dy + box.size.height / 2;
 
-      if (mounted) {
-        setState(() {
-          _originAlignment = Alignment(
-            (centerX / screenSize.width) * 2 - 1,
-            (centerY / screenSize.height) * 2 - 1,
-          );
-        });
-      }
+      final Offset iconCenter = Offset(
+        position.dx + box.size.width / 2,
+        position.dy + box.size.height / 2,
+      );
+      final Offset screenCenter = Offset(
+        screenSize.width / 2,
+        screenSize.height / 2,
+      );
+
+      startScale = box.size.width / screenSize.width * 1.1;
+      startTranslation = iconCenter - screenCenter;
     }
+
+    setState(() {
+      _scaleAnimation = TweenSequence<double>([
+        TweenSequenceItem(
+            tween: Tween(begin: startScale, end: 1.0).chain(CurveTween(curve: Curves.easeInOutCubic)),
+            weight: 20),
+        TweenSequenceItem(
+            tween: ConstantTween(1.0),
+            weight: 60),
+        TweenSequenceItem(
+            tween: Tween(begin: 1.0, end: startScale).chain(CurveTween(curve: Curves.easeInOutCubic)),
+            weight: 20),
+      ]).animate(_controller);
+
+      _translateAnimation = TweenSequence<Offset>([
+        TweenSequenceItem(
+            tween: Tween(begin: startTranslation, end: Offset.zero).chain(CurveTween(curve: Curves.easeInOutCubic)),
+            weight: 20),
+        TweenSequenceItem(
+            tween: ConstantTween(Offset.zero),
+            weight: 60),
+        TweenSequenceItem(
+            tween: Tween(begin: Offset.zero, end: startTranslation).chain(CurveTween(curve: Curves.easeInOutCubic)),
+            weight: 20),
+      ]).animate(_controller);
+
+      // Налаштовуємо плавний перехід (морфінг) від маленької іконки до великої
+      _morphAnimation = TweenSequence<double>([
+        TweenSequenceItem(
+            tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut)),
+            weight: 15), // Проявляється у перші 15% часу
+        TweenSequenceItem(
+            tween: ConstantTween(1.0),
+            weight: 70),
+        TweenSequenceItem(
+            tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeInOut)),
+            weight: 15), // Зникає в останні 15% часу
+      ]).animate(_controller);
+    });
+
+    _controller.forward();
   }
 
   @override
@@ -63,30 +112,50 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
 
   @override
   Widget build(BuildContext context) {
-    final scaleAnim = TweenSequence<double>([
-      TweenSequenceItem(
-          tween: Tween(begin: 0.02, end: 1.0).chain(CurveTween(curve: Curves.easeOutBack)),
-          weight: 20),
-      TweenSequenceItem(
-          tween: ConstantTween(1.0),
-          weight: 60),
-      TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.02).chain(CurveTween(curve: Curves.easeInOutCubic)),
-          weight: 20),
-    ]).animate(_controller);
+    if (_scaleAnimation == null || _translateAnimation == null || _morphAnimation == null) {
+      return const SizedBox();
+    }
 
-    return ScaleTransition(
-      scale: scaleAnim,
-      alignment: _originAlignment,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          return CustomPaint(
-            painter: _getPainterForWeather(widget.iconCode, _controller.value, widget.partOfDay),
-            size: Size.infinite,
-          );
-        },
-      ),
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return Transform.translate(
+          offset: _translateAnimation!.value,
+          child: Transform.scale(
+            scale: _scaleAnimation!.value,
+            alignment: Alignment.center,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Маленька іконка, яка летить і плавно зникає
+                Opacity(
+                  opacity: 1.0 - _morphAnimation!.value,
+                  child: Center(
+                    child: AnimatedWeatherIcon(
+                      iconCode: widget.iconCode,
+                      // Математика: задаємо такий базовий розмір, щоб при множенні
+                      // на startScale він ідеально збігся з оригінальною іконкою 50px
+                      size: screenWidth / 1.1,
+                      partOfDay: widget.partOfDay,
+                    ),
+                  ),
+                ),
+                // Повноекранна кастомна анімація, яка летить і плавно з'являється
+                Opacity(
+                  opacity: _morphAnimation!.value,
+                  child: CustomPaint(
+                    painter: _getPainterForWeather(
+                        widget.iconCode, _controller.value, widget.partOfDay),
+                    size: Size.infinite,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

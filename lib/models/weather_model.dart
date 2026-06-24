@@ -24,6 +24,32 @@ class DailyForecast {
   });
 }
 
+int _getWeatherPriority(String icon) {
+  final code = icon.replaceAll('d', '').replaceAll('n', '');
+  switch (code) {
+    case '11':
+      return 7; // Thunderstorm
+    case '13':
+      return 6; // Snow
+    case '09':
+      return 5; // Shower rain
+    case '10':
+      return 4; // Rain
+    case '50':
+      return 3; // Mist/Fog
+    case '04':
+      return 2; // Broken clouds
+    case '03':
+      return 1; // Scattered clouds
+    case '02':
+      return 0; // Few clouds
+    case '01':
+      return -1; // Clear
+    default:
+      return -2;
+  }
+}
+
 class WeatherModel {
   final String cityName;
   final String region;
@@ -72,35 +98,39 @@ class WeatherModel {
   }
 
   factory WeatherModel.fromJson(
-      Map<String, dynamic> currentJson,
-      Map<String, dynamic>? forecastJson,
-      Map<String, dynamic>? aqiJson,
-      String cityName,
-      String region,
-      String country,
-      ) {
+    Map<String, dynamic> currentJson,
+    Map<String, dynamic>? forecastJson,
+    Map<String, dynamic>? aqiJson,
+    String cityName,
+    String region,
+    String country,
+  ) {
     int timezoneOffset = currentJson['timezone'] ?? 0;
 
     DateTime calcLocalTime = DateTime.now().toUtc().add(
       Duration(seconds: timezoneOffset),
     );
-
     DateTime calcSunrise = DateTime.fromMillisecondsSinceEpoch(
       currentJson['sys']['sunrise'] * 1000,
       isUtc: true,
     ).add(Duration(seconds: timezoneOffset));
-
     DateTime calcSunset = DateTime.fromMillisecondsSinceEpoch(
       currentJson['sys']['sunset'] * 1000,
       isUtc: true,
     ).add(Duration(seconds: timezoneOffset));
 
+    // FIX: Fallback to 3h if 1h is not provided by the API
     double precip = 0.0;
-    if (currentJson['rain'] != null && currentJson['rain']['1h'] != null) {
-      precip = (currentJson['rain']['1h'] as num).toDouble();
-    } else if (currentJson['snow'] != null &&
-        currentJson['snow']['1h'] != null) {
-      precip = (currentJson['snow']['1h'] as num).toDouble();
+    if (currentJson['rain'] != null) {
+      precip =
+          ((currentJson['rain']['1h'] ?? currentJson['rain']['3h'] ?? 0.0)
+                  as num)
+              .toDouble();
+    } else if (currentJson['snow'] != null) {
+      precip =
+          ((currentJson['snow']['1h'] ?? currentJson['snow']['3h'] ?? 0.0)
+                  as num)
+              .toDouble();
     }
 
     int parsedAqi = 1;
@@ -110,9 +140,18 @@ class WeatherModel {
       parsedAqi = aqiJson['list'][0]['main']['aqi'] ?? 1;
     }
 
+    // FIX: Find the most severe current weather condition
+    var currentWeathers = currentJson['weather'] as List;
+    var bestCurrentWeather = currentWeathers[0];
+    for (var w in currentWeathers) {
+      if (_getWeatherPriority(w['icon']) >
+          _getWeatherPriority(bestCurrentWeather['icon'])) {
+        bestCurrentWeather = w;
+      }
+    }
+
     List<HourlyForecast> hourly = [];
     List<DailyForecast> daily = [];
-
     if (forecastJson != null && forecastJson['list'] != null) {
       final list = forecastJson['list'] as List;
       Map<String, DailyForecast> dailyMap = {};
@@ -124,12 +163,23 @@ class WeatherModel {
           isUtc: true,
         ).add(Duration(seconds: timezoneOffset));
 
+        // Find most severe weather for this specific hourly block
+        var itemWeathers = item['weather'] as List;
+        var bestItemWeather = itemWeathers[0];
+        for (var w in itemWeathers) {
+          if (_getWeatherPriority(w['icon']) >
+              _getWeatherPriority(bestItemWeather['icon'])) {
+            bestItemWeather = w;
+          }
+        }
+        String hourlyIcon = bestItemWeather['icon'];
+
         if (hourly.length < 8) {
           hourly.add(
             HourlyForecast(
               time: dt,
               temperature: item['main']['temp'].toDouble(),
-              iconCode: item['weather'][0]['icon'],
+              iconCode: hourlyIcon,
             ),
           );
         }
@@ -137,29 +187,27 @@ class WeatherModel {
         String dateKey =
             "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
         double temp = item['main']['temp'].toDouble();
-        String icon = item['weather'][0]['icon'];
+        String normalizedIcon = hourlyIcon.contains('d')
+            ? hourlyIcon
+            : hourlyIcon.replaceAll('n', 'd');
 
         if (!dailyMap.containsKey(dateKey)) {
           dailyMap[dateKey] = DailyForecast(
             date: dt,
             minTemp: temp,
             maxTemp: temp,
-            iconCode: icon.contains('d')
-                ? icon
-                : icon.replaceAll(
-              'n',
-              'd',
-            ),
+            iconCode: normalizedIcon,
           );
         } else {
           if (temp < dailyMap[dateKey]!.minTemp)
             dailyMap[dateKey]!.minTemp = temp;
           if (temp > dailyMap[dateKey]!.maxTemp)
             dailyMap[dateKey]!.maxTemp = temp;
-          if (dt.hour >= 11 && dt.hour <= 16) {
-            dailyMap[dateKey]!.iconCode = icon.contains('d')
-                ? icon
-                : icon.replaceAll('n', 'd');
+
+          // FIX: Overwrite daily icon if the new block has more severe weather
+          if (_getWeatherPriority(normalizedIcon) >
+              _getWeatherPriority(dailyMap[dateKey]!.iconCode)) {
+            dailyMap[dateKey]!.iconCode = normalizedIcon;
           }
         }
       }
@@ -175,9 +223,9 @@ class WeatherModel {
       country: country,
       temperature: currentJson['main']['temp'].toDouble(),
       feelsLike: currentJson['main']['feels_like'].toDouble(),
-      description: currentJson['weather'][0]['description'],
-      iconCode: currentJson['weather'][0]['icon'],
-      mainCondition: currentJson['weather'][0]['main'],
+      description: bestCurrentWeather['description'],
+      iconCode: bestCurrentWeather['icon'],
+      mainCondition: bestCurrentWeather['main'],
       humidity: currentJson['main']['humidity'],
       windSpeed: currentJson['wind']['speed'].toDouble(),
       precipitation: precip,
@@ -193,7 +241,8 @@ class WeatherModel {
   }
 
   bool get isDayTime {
-    return currentLocalTime.isAfter(sunrise) && currentLocalTime.isBefore(sunset);
+    return currentLocalTime.isAfter(sunrise) &&
+        currentLocalTime.isBefore(sunset);
   }
 
   String get partOfDay {
@@ -204,7 +253,9 @@ class WeatherModel {
     final duskEnd = sunset.add(const Duration(minutes: 45));
     final int daylightMinutes = eveningStart.difference(morningStart).inMinutes;
     final noonStart = morningStart.add(Duration(minutes: daylightMinutes ~/ 3));
-    final afternoonStart = morningStart.add(Duration(minutes: (daylightMinutes ~/ 3) * 2));
+    final afternoonStart = morningStart.add(
+      Duration(minutes: (daylightMinutes ~/ 3) * 2),
+    );
 
     if (now.isBefore(dawnStart)) return 'Ніч';
     if (now.isBefore(morningStart)) return 'Світанок';
@@ -233,10 +284,10 @@ class CitySuggestion {
   });
 
   factory CitySuggestion.fromJson(
-      Map<String, dynamic> json,
-      String translatedCountry,
-      String translatedRegion,
-      ) {
+    Map<String, dynamic> json,
+    String translatedCountry,
+    String translatedRegion,
+  ) {
     final localNames = json['local_names'] ?? {};
     final ukName = localNames['uk'] ?? json['name'];
 
