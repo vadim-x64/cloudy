@@ -1,4 +1,4 @@
-# Cloudy
+# 🌦️ Cloudy
 
 **Cloudy** - це динамічний Flutter-застосунок погоди для Android, який поєднує класичний 
 метеомоніторинг із візуально насиченим інтерфейсом, адаптивними фонами, прогнозами, картою, 
@@ -241,7 +241,7 @@ flutter run
 ```env
 OPENWEATHER_API_KEY=your_openweather_api_key
 GROK_API_KEY=your_groq_or_xai_api_key
-AI_GREETING_PROMPT=yuor_greeting_prompt
+AI_GREETING_PROMPT=your_greeting_prompt
 AI_CHAT_PROMPT=your_prompt
 ```
 
@@ -350,4 +350,13 @@ AI_CHAT_PROMPT=your_prompt
 **1.0.0+1**
 
 ## Ліцензія
-Поки що не вказана.
+
+Авторське право © 2026 В. Войцеховський. Усі права захищено.
+Це програмне забезпечення та його вихідний код є власністю та конфіденційними.
+Несанкціоноване копіювання, модифікація, розповсюдження, публікація або використання будь-якої частини цього проєкту суворо заборонено без попереднього письмового дозволу автора.
+
+---
+
+Copyright © 2026 V. Voitsekhovskyi. All rights reserved.
+This software and its source code are proprietary and confidential.
+Unauthorized copying, modification, distribution, publication, or use of any part of this project is strictly prohibited without prior written permission from the author.
