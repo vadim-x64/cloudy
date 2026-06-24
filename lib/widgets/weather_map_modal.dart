@@ -37,8 +37,10 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
     {'id': 'clouds_new', 'name': 'Хмари'},
     {'id': 'temp_new', 'name': 'Температура'},
     {'id': 'wind_new', 'name': 'Вітер'},
+    {'id': 'pressure_new', 'name': 'Тиск'},
     {'id': 'earthquakes', 'name': 'Землетруси'},
     {'id': 'fires', 'name': 'Пожежі'},
+    {'id': 'storms', 'name': 'Грози'},
   ];
 
   @override
@@ -67,19 +69,23 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
       _activeFilter = filterId;
       _markers = [];
     });
-
     if (filterId == 'earthquakes') {
       await _fetchEarthquakes();
     } else if (filterId == 'fires') {
       await _fetchFires();
+    } else if (filterId == 'storms') {
+      await _fetchStorms();
     }
   }
 
   Future<void> _fetchEarthquakes() async {
     setState(() => _isLoadingData = true);
     try {
-      final response = await http.get(Uri.parse(
-          'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson'));
+      final response = await http.get(
+        Uri.parse(
+          'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson',
+        ),
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -95,14 +101,20 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
             height: 30,
             child: Container(
               decoration: BoxDecoration(
-                color: mag > 5.0 ? Colors.redAccent.withOpacity(0.7) : Colors.orangeAccent.withOpacity(0.7),
+                color: mag > 5.0
+                    ? Colors.redAccent.withOpacity(0.7)
+                    : Colors.orangeAccent.withOpacity(0.7),
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white54, width: 1),
               ),
               child: Center(
                 child: Text(
                   mag.toStringAsFixed(1),
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -120,30 +132,98 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
   Future<void> _fetchFires() async {
     setState(() => _isLoadingData = true);
     try {
-      final response = await http.get(Uri.parse(
-          'https://eonet.gsfc.nasa.gov/api/v3/events?category=wildfires&status=open&days=3'));
-
+      final response = await http.get(
+        Uri.parse(
+          'https://eonet.gsfc.nasa.gov/api/v3/events?category=wildfires&status=open&days=7',
+        ),
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List events = data['events'];
 
-        final newMarkers = events.map((event) {
-          final coords = event['geometries'][0]['coordinates'];
-          return Marker(
-            point: LatLng(coords[1], coords[0]),
-            width: 24,
-            height: 24,
-            child: const Icon(
-              Icons.local_fire_department,
-              color: Colors.deepOrangeAccent,
-              size: 24,
-            ),
-          );
-        }).toList();
+        final newMarkers = <Marker>[];
+        for (var event in events) {
+          if (event['geometries'] != null && event['geometries'].isNotEmpty) {
+            final geo = event['geometries'][0];
+            double lat = 0.0;
+            double lon = 0.0;
 
+            if (geo['type'] == 'Point') {
+              lon = geo['coordinates'][0];
+              lat = geo['coordinates'][1];
+            } else if (geo['type'] == 'Polygon') {
+              lon = geo['coordinates'][0][0][0];
+              lat = geo['coordinates'][0][0][1];
+            }
+
+            newMarkers.add(
+              Marker(
+                point: LatLng(lat, lon),
+                width: 24,
+                height: 24,
+                child: const Icon(
+                  Icons.local_fire_department,
+                  color: Colors.deepOrangeAccent,
+                  size: 24,
+                ),
+              ),
+            );
+          }
+        }
         if (mounted) setState(() => _markers = newMarkers);
       }
     } catch (e) {
+      debugPrint('Fires fetch error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingData = false);
+    }
+  }
+
+  Future<void> _fetchStorms() async {
+    setState(() => _isLoadingData = true);
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://eonet.gsfc.nasa.gov/api/v3/events?category=severeStorms&status=open&days=14',
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List events = data['events'];
+
+        final newMarkers = <Marker>[];
+        for (var event in events) {
+          if (event['geometries'] != null && event['geometries'].isNotEmpty) {
+            final geo = event['geometries'][0];
+            double lat = 0.0;
+            double lon = 0.0;
+
+            if (geo['type'] == 'Point') {
+              lon = geo['coordinates'][0];
+              lat = geo['coordinates'][1];
+            } else if (geo['type'] == 'Polygon') {
+              lon = geo['coordinates'][0][0][0];
+              lat = geo['coordinates'][0][0][1];
+            }
+
+            newMarkers.add(
+              Marker(
+                point: LatLng(lat, lon),
+                width: 28,
+                height: 28,
+                child: const Icon(
+                  Icons.thunderstorm,
+                  color: Colors.yellowAccent,
+                  size: 28,
+                ),
+              ),
+            );
+          }
+        }
+        if (mounted) setState(() => _markers = newMarkers);
+      }
+    } catch (e) {
+      debugPrint('Storms fetch error: $e');
     } finally {
       if (mounted) setState(() => _isLoadingData = false);
     }
@@ -158,8 +238,8 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
 
     try {
       final weather = await _weatherService.fetchWeatherByCoordinates(
-          point.latitude,
-          point.longitude
+        point.latitude,
+        point.longitude,
       );
       if (mounted) {
         setState(() {
@@ -192,7 +272,13 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
   @override
   Widget build(BuildContext context) {
     final apiKey = dotenv.env['OPENWEATHER_API_KEY'] ?? '';
-    final isWeatherLayer = !_activeFilter.contains('earthquakes') && !_activeFilter.contains('fires');
+    final isWeatherLayer = [
+      'precipitation_new',
+      'clouds_new',
+      'temp_new',
+      'wind_new',
+      'pressure_new',
+    ].contains(_activeFilter);
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -207,7 +293,10 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                 initialCenter: LatLng(widget.lat, widget.lon),
                 initialZoom: 4.0,
                 interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
+                  flags:
+                      InteractiveFlag.drag |
+                      InteractiveFlag.pinchZoom |
+                      InteractiveFlag.doubleTapZoom,
                 ),
                 onTap: _onMapTap,
               ),
@@ -218,11 +307,11 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                 ),
                 if (isWeatherLayer)
                   TileLayer(
-                    urlTemplate: 'https://tile.openweathermap.org/map/$_activeFilter/{z}/{x}/{y}.png?appid=$apiKey',
+                    urlTemplate:
+                        'https://tile.openweathermap.org/map/$_activeFilter/{z}/{x}/{y}.png?appid=$apiKey',
                     backgroundColor: Colors.transparent,
                   ),
-                if (!isWeatherLayer)
-                  MarkerLayer(markers: _markers),
+                if (!isWeatherLayer) MarkerLayer(markers: _markers),
 
                 if (_tappedPoint != null)
                   MarkerLayer(
@@ -253,25 +342,40 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                     padding: const EdgeInsets.only(top: 12, bottom: 12),
                     decoration: BoxDecoration(
                       color: Colors.blueGrey.shade900.withOpacity(0.7),
-                      border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
                                 'Глобальна карта',
-                                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               if (_isLoadingData)
                                 const SizedBox(
-                                  width: 16, height: 16,
-                                  child: CircularProgressIndicator(color: Colors.blueAccent, strokeWidth: 2),
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.blueAccent,
+                                    strokeWidth: 2,
+                                  ),
                                 ),
                             ],
                           ),
@@ -284,7 +388,8 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
                             itemCount: _filters.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 8),
                             itemBuilder: (context, index) {
                               final filter = _filters[index];
                               final isActive = _activeFilter == filter['id'];
@@ -292,18 +397,27 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                               return GestureDetector(
                                 onTap: () => _handleFilterChange(filter['id']!),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: isActive ? Colors.blueAccent : Colors.white.withOpacity(0.1),
+                                    color: isActive
+                                        ? Colors.blueAccent
+                                        : Colors.white.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   alignment: Alignment.center,
                                   child: Text(
                                     filter['name']!,
                                     style: TextStyle(
-                                      color: isActive ? Colors.white : Colors.white70,
+                                      color: isActive
+                                          ? Colors.white
+                                          : Colors.white70,
                                       fontSize: 13,
-                                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                      fontWeight: isActive
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
                                     ),
                                   ),
                                 ),
@@ -332,69 +446,91 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                       decoration: BoxDecoration(
                         color: Colors.blueGrey.shade900.withOpacity(0.8),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                        ),
                       ),
                       child: _isLoadingTappedLocation
                           ? const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(color: Colors.blueAccent, strokeWidth: 2),
-                          ),
-                          SizedBox(width: 12),
-                          Text('Отримання даних...', style: TextStyle(color: Colors.white70)),
-                        ],
-                      )
-                          : Row(
-                        children: [
-                          const Icon(Icons.location_on, color: Colors.redAccent, size: 28),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  _tappedLocationInfo!['name'],
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.blueAccent,
+                                    strokeWidth: 2,
+                                  ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(width: 12),
                                 Text(
-                                  'Шир: ${_tappedLocationInfo!['lat'].toStringAsFixed(4)}, Довг: ${_tappedLocationInfo!['lon'].toStringAsFixed(4)}',
-                                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                  'Отримання даних...',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                const Icon(
+                                  Icons.location_on,
+                                  color: Colors.redAccent,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        _tappedLocationInfo!['name'],
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Шир: ${_tappedLocationInfo!['lat'].toStringAsFixed(4)}, Довг: ${_tappedLocationInfo!['lon'].toStringAsFixed(4)}',
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (_tappedLocationInfo!['temp'] != null)
+                                  Text(
+                                    '${_tappedLocationInfo!['temp'].round()}°C',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w300,
+                                    ),
+                                  ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.white54,
+                                    size: 20,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () {
+                                    setState(() {
+                                      _tappedPoint = null;
+                                      _tappedLocationInfo = null;
+                                    });
+                                  },
                                 ),
                               ],
                             ),
-                          ),
-                          if (_tappedLocationInfo!['temp'] != null)
-                            Text(
-                              '${_tappedLocationInfo!['temp'].round()}°C',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w300),
-                            ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white54, size: 20),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () {
-                              setState(() {
-                                _tappedPoint = null;
-                                _tappedLocationInfo = null;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                 ),
@@ -421,7 +557,14 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
                     elevation: 0,
                     highlightElevation: 0,
                     child: _isLoadingLocation
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : const Icon(Icons.my_location, color: Colors.white),
                   ),
                 ],

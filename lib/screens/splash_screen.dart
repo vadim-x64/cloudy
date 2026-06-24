@@ -68,7 +68,6 @@ class _SplashScreenState extends State<SplashScreen>
           reverseTransitionDuration: const Duration(milliseconds: 1200),
           pageBuilder: (_, __, ___) => const HomeScreen(),
           transitionsBuilder: (_, animation, __, child) {
-
             final curvedAnimation = CurvedAnimation(
               parent: animation,
               curve: Curves.easeInOutCubic,
@@ -108,10 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
               builder: (context, child) {
                 return Opacity(
                   opacity: _logoOpacity.value,
-                  child: Transform.scale(
-                    scale: _logoScale.value,
-                    child: child,
-                  ),
+                  child: Transform.scale(scale: _logoScale.value, child: child),
                 );
               },
               child: Image.asset('assets/logo.png', width: 350, height: 350),

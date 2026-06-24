@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 
 class DynamicLoader extends StatefulWidget {
   final double size;
+
   const DynamicLoader({super.key, this.size = 80.0});
 
   @override
   State<DynamicLoader> createState() => _DynamicLoaderState();
 }
 
-class _DynamicLoaderState extends State<DynamicLoader> with SingleTickerProviderStateMixin {
+class _DynamicLoaderState extends State<DynamicLoader>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -35,9 +37,7 @@ class _DynamicLoaderState extends State<DynamicLoader> with SingleTickerProvider
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
-          return CustomPaint(
-            painter: _LiquidGlossyPainter(_controller.value),
-          );
+          return CustomPaint(painter: _LiquidGlossyPainter(_controller.value));
         },
       ),
     );
@@ -46,6 +46,7 @@ class _DynamicLoaderState extends State<DynamicLoader> with SingleTickerProvider
 
 class _LiquidGlossyPainter extends CustomPainter {
   final double progress;
+
   _LiquidGlossyPainter(this.progress);
 
   @override
@@ -76,8 +77,14 @@ class _LiquidGlossyPainter extends CustomPainter {
 
     final gradientPaint = Paint()
       ..shader = LinearGradient(
-        begin: Alignment(-1.0 + math.sin(progress * math.pi * 2) * 0.5, -1.0 + math.cos(progress * math.pi) * 0.5),
-        end: Alignment(1.0 + math.cos(progress * math.pi * 2) * 0.5, 1.0 + math.sin(progress * math.pi) * 0.5),
+        begin: Alignment(
+          -1.0 + math.sin(progress * math.pi * 2) * 0.5,
+          -1.0 + math.cos(progress * math.pi) * 0.5,
+        ),
+        end: Alignment(
+          1.0 + math.cos(progress * math.pi * 2) * 0.5,
+          1.0 + math.sin(progress * math.pi) * 0.5,
+        ),
         colors: const [
           Colors.white,
           Color(0xFFFAFAFA),
@@ -111,10 +118,7 @@ class _LiquidGlossyPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [
-          Colors.white.withOpacity(0.9),
-          Colors.white.withOpacity(0.0),
-        ],
+        colors: [Colors.white.withOpacity(0.9), Colors.white.withOpacity(0.0)],
         stops: const [0.0, 0.5],
       ).createShader(Rect.fromCircle(center: center, radius: baseRadius));
 

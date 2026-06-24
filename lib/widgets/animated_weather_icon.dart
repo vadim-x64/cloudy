@@ -101,7 +101,10 @@ class WeatherIconPainter extends CustomPainter {
 
     bool isSunrise = partOfDay == 'Світанок';
     bool isSunset = partOfDay == 'Вечір';
-    bool isNightTime = partOfDay == 'Сутінки' || partOfDay == 'Ніч' || (!isDay && !isSunrise && !isSunset);
+    bool isNightTime =
+        partOfDay == 'Сутінки' ||
+        partOfDay == 'Ніч' ||
+        (!isDay && !isSunrise && !isSunset);
 
     if (type == WeatherType.clear || type == WeatherType.partlyCloudy) {
       if (type == WeatherType.partlyCloudy) {
@@ -112,9 +115,21 @@ class WeatherIconPainter extends CustomPainter {
         }
       } else {
         if (isSunrise) {
-          _drawHorizonSun(canvas, size, centerOffset, isPartial: false, isSunset: false);
+          _drawHorizonSun(
+            canvas,
+            size,
+            centerOffset,
+            isPartial: false,
+            isSunset: false,
+          );
         } else if (isSunset) {
-          _drawHorizonSun(canvas, size, centerOffset, isPartial: false, isSunset: true);
+          _drawHorizonSun(
+            canvas,
+            size,
+            centerOffset,
+            isPartial: false,
+            isSunset: true,
+          );
         } else if (isNightTime) {
           _drawMoonAndStars(canvas, size, centerOffset, isPartial: false);
         } else {
@@ -204,8 +219,7 @@ class WeatherIconPainter extends CustomPainter {
 
       for (int i = 0; i < 10; i++) {
         double sx = size.width * 0.05 + rand.nextDouble() * (size.width * 0.9);
-        double sy =
-            size.height * 0.05 + rand.nextDouble() * (size.height);
+        double sy = size.height * 0.05 + rand.nextDouble() * (size.height);
 
         double opacity = (sin((animationValue * pi * 4) + i * 1.5) + 1) / 2;
         starPaint.color = Colors.white.withOpacity(0.25 + opacity * 0.75);
@@ -246,12 +260,12 @@ class WeatherIconPainter extends CustomPainter {
   }
 
   void _drawHorizonSun(
-      Canvas canvas,
-      Size size,
-      Offset center, {
-        bool isPartial = false,
-        bool isSunset = false,
-      }) {
+    Canvas canvas,
+    Size size,
+    Offset center, {
+    bool isPartial = false,
+    bool isSunset = false,
+  }) {
     final double radius = size.width * (isPartial ? 0.2 : 0.25);
     final Offset sunCenter = isPartial
         ? Offset(size.width * 0.65, size.height * 0.35)
@@ -266,7 +280,9 @@ class WeatherIconPainter extends CustomPainter {
     final double lineThickness = size.width * 0.02;
 
     canvas.save();
-    canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY - (lineThickness / 2)));
+    canvas.clipRect(
+      Rect.fromLTRB(0, 0, size.width, horizonY - (lineThickness / 2)),
+    );
 
     final glowPaint = Paint()..color = glowColor.withOpacity(0.5);
     canvas.drawCircle(adjustedCenter, radius * 1.3, glowPaint);

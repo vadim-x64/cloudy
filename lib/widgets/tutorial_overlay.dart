@@ -25,7 +25,11 @@ class TutorialOverlay extends StatefulWidget {
     required this.partOfDay,
   });
 
-  static void show(BuildContext context, List<TutorialStep> steps, String partOfDay) {
+  static void show(
+    BuildContext context,
+    List<TutorialStep> steps,
+    String partOfDay,
+  ) {
     OverlayState? overlayState = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
@@ -46,7 +50,8 @@ class TutorialOverlay extends StatefulWidget {
   State<TutorialOverlay> createState() => _TutorialOverlayState();
 }
 
-class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderStateMixin {
+class _TutorialOverlayState extends State<TutorialOverlay>
+    with TickerProviderStateMixin {
   int _currentStep = 0;
   Rect _targetRect = Rect.zero;
   late AnimationController _pulseController;
@@ -96,7 +101,12 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
         if (box != null) {
           final Offset position = box.localToGlobal(Offset.zero);
           setState(() {
-            _targetRect = Rect.fromLTWH(position.dx, position.dy, box.size.width, box.size.height);
+            _targetRect = Rect.fromLTWH(
+              position.dx,
+              position.dy,
+              box.size.width,
+              box.size.height,
+            );
           });
 
           if (!_fadeController.isAnimating && !_fadeController.isCompleted) {
@@ -143,11 +153,17 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
       case 'Ранок':
         return {'bg': const Color(0xFF0D3B31), 'accent': Colors.greenAccent};
       case 'День':
-        return {'bg': const Color(0xFF0D2A4A), 'accent': Colors.lightBlueAccent};
+        return {
+          'bg': const Color(0xFF0D2A4A),
+          'accent': Colors.lightBlueAccent,
+        };
       case 'Полудень':
         return {'bg': const Color(0xFF1A237E), 'accent': Colors.blueAccent};
       case 'Вечір':
-        return {'bg': const Color(0xFF4A1500), 'accent': Colors.deepOrangeAccent};
+        return {
+          'bg': const Color(0xFF4A1500),
+          'accent': Colors.deepOrangeAccent,
+        };
       case 'Сутінки':
         return {'bg': const Color(0xFF1E0033), 'accent': Colors.purpleAccent};
       case 'Ніч':
@@ -207,7 +223,9 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeInOutCubic,
               top: isTopHalf ? _targetRect.bottom + 20 : null,
-              bottom: isTopHalf ? null : (screenSize.height - _targetRect.top) + 20,
+              bottom: isTopHalf
+                  ? null
+                  : (screenSize.height - _targetRect.top) + 20,
               left: 20,
               right: 20,
               child: ClipRRect(
@@ -219,7 +237,10 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                     decoration: BoxDecoration(
                       color: bgColor.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 1.5),
+                      border: Border.all(
+                        color: accentColor.withValues(alpha: 0.5),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: accentColor.withValues(alpha: 0.2),
@@ -249,7 +270,11 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.auto_awesome, color: accentColor, size: 24),
+                              Icon(
+                                Icons.auto_awesome,
+                                color: accentColor,
+                                size: 24,
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
@@ -264,7 +289,10 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                               ),
                               Text(
                                 '${_currentStep + 1} / ${widget.steps.length}',
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontSize: 14,
+                                ),
                               ),
                             ],
                           ),
@@ -284,7 +312,9 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                               TextButton(
                                 onPressed: _closeTutorial,
                                 style: TextButton.styleFrom(
-                                  foregroundColor: Colors.white.withValues(alpha: 0.6),
+                                  foregroundColor: Colors.white.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                                 child: const Text('Пропустити'),
                               ),
@@ -294,11 +324,13 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                                     TextButton(
                                       onPressed: _previousStep,
                                       style: TextButton.styleFrom(
-                                        foregroundColor: Colors.white.withValues(alpha: 0.9),
+                                        foregroundColor: Colors.white
+                                            .withValues(alpha: 0.9),
                                       ),
                                       child: const Text('Назад'),
                                     ),
-                                  if (_currentStep > 0) const SizedBox(width: 8),
+                                  if (_currentStep > 0)
+                                    const SizedBox(width: 8),
                                   ElevatedButton(
                                     onPressed: _nextStep,
                                     style: ElevatedButton.styleFrom(
@@ -308,11 +340,18 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(15),
                                       ),
-                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 12,
+                                      ),
                                     ),
                                     child: Text(
-                                      _currentStep == widget.steps.length - 1 ? 'Зрозуміло!' : 'Далі',
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      _currentStep == widget.steps.length - 1
+                                          ? 'Зрозуміло!'
+                                          : 'Далі',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -346,14 +385,22 @@ class _OverlayCutoutPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final backgroundPaint = Paint()..color = Colors.black.withValues(alpha: 0.75);
-    final backgroundPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final backgroundPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.75);
+    final backgroundPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
     final expandedCutout = cutout.inflate(8.0);
     final punchoutPath = Path()
-      ..addRRect(RRect.fromRectAndRadius(expandedCutout, const Radius.circular(20)));
+      ..addRRect(
+        RRect.fromRectAndRadius(expandedCutout, const Radius.circular(20)),
+      );
 
-    final finalPath = Path.combine(PathOperation.difference, backgroundPath, punchoutPath);
+    final finalPath = Path.combine(
+      PathOperation.difference,
+      backgroundPath,
+      punchoutPath,
+    );
     canvas.drawPath(finalPath, backgroundPaint);
 
     final glowPaint = Paint()
@@ -367,8 +414,14 @@ class _OverlayCutoutPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    canvas.drawRRect(RRect.fromRectAndRadius(expandedCutout, const Radius.circular(20)), glowPaint);
-    canvas.drawRRect(RRect.fromRectAndRadius(expandedCutout, const Radius.circular(20)), borderPaint);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(expandedCutout, const Radius.circular(20)),
+      glowPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(expandedCutout, const Radius.circular(20)),
+      borderPaint,
+    );
   }
 
   @override

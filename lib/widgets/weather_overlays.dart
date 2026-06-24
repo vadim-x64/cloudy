@@ -45,7 +45,8 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
     Offset startTranslation = Offset.zero;
 
     if (widget.sourceKey?.currentContext != null) {
-      final RenderBox box = widget.sourceKey!.currentContext!.findRenderObject() as RenderBox;
+      final RenderBox box =
+          widget.sourceKey!.currentContext!.findRenderObject() as RenderBox;
       final Offset position = box.localToGlobal(Offset.zero);
       final Size screenSize = MediaQuery.of(context).size;
 
@@ -65,38 +66,56 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
     setState(() {
       _scaleAnimation = TweenSequence<double>([
         TweenSequenceItem(
-            tween: Tween(begin: startScale, end: 1.0).chain(CurveTween(curve: Curves.easeInOutCubic)),
-            weight: 20),
+          tween: Tween(
+            begin: startScale,
+            end: 1.0,
+          ).chain(CurveTween(curve: Curves.easeInOutCubic)),
+          weight: 20,
+        ),
+        TweenSequenceItem(tween: ConstantTween(1.0), weight: 60),
         TweenSequenceItem(
-            tween: ConstantTween(1.0),
-            weight: 60),
-        TweenSequenceItem(
-            tween: Tween(begin: 1.0, end: startScale).chain(CurveTween(curve: Curves.easeInOutCubic)),
-            weight: 20),
+          tween: Tween(
+            begin: 1.0,
+            end: startScale,
+          ).chain(CurveTween(curve: Curves.easeInOutCubic)),
+          weight: 20,
+        ),
       ]).animate(_controller);
 
       _translateAnimation = TweenSequence<Offset>([
         TweenSequenceItem(
-            tween: Tween(begin: startTranslation, end: Offset.zero).chain(CurveTween(curve: Curves.easeInOutCubic)),
-            weight: 20),
+          tween: Tween(
+            begin: startTranslation,
+            end: Offset.zero,
+          ).chain(CurveTween(curve: Curves.easeInOutCubic)),
+          weight: 20,
+        ),
+        TweenSequenceItem(tween: ConstantTween(Offset.zero), weight: 60),
         TweenSequenceItem(
-            tween: ConstantTween(Offset.zero),
-            weight: 60),
-        TweenSequenceItem(
-            tween: Tween(begin: Offset.zero, end: startTranslation).chain(CurveTween(curve: Curves.easeInOutCubic)),
-            weight: 20),
+          tween: Tween(
+            begin: Offset.zero,
+            end: startTranslation,
+          ).chain(CurveTween(curve: Curves.easeInOutCubic)),
+          weight: 20,
+        ),
       ]).animate(_controller);
 
       _morphAnimation = TweenSequence<double>([
         TweenSequenceItem(
-            tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut)),
-            weight: 15),
+          tween: Tween(
+            begin: 0.0,
+            end: 1.0,
+          ).chain(CurveTween(curve: Curves.easeInOut)),
+          weight: 15,
+        ),
+        TweenSequenceItem(tween: ConstantTween(1.0), weight: 70),
         TweenSequenceItem(
-            tween: ConstantTween(1.0),
-            weight: 70),
-        TweenSequenceItem(
-            tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeInOut)),
-            weight: 15),
+          tween: Tween(
+            begin: 1.0,
+            end: 0.0,
+          ).chain(CurveTween(curve: Curves.easeInOut)),
+          weight: 15,
+        ),
       ]).animate(_controller);
     });
 
@@ -111,7 +130,9 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
 
   @override
   Widget build(BuildContext context) {
-    if (_scaleAnimation == null || _translateAnimation == null || _morphAnimation == null) {
+    if (_scaleAnimation == null ||
+        _translateAnimation == null ||
+        _morphAnimation == null) {
       return const SizedBox();
     }
 
@@ -142,7 +163,10 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
                   opacity: _morphAnimation!.value,
                   child: CustomPaint(
                     painter: _getPainterForWeather(
-                        widget.iconCode, _controller.value, widget.partOfDay),
+                      widget.iconCode,
+                      _controller.value,
+                      widget.partOfDay,
+                    ),
                     size: Size.infinite,
                   ),
                 ),
@@ -154,14 +178,24 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
     );
   }
 
-  CustomPainter _getPainterForWeather(String iconCode, double progress, String partOfDay) {
+  CustomPainter _getPainterForWeather(
+    String iconCode,
+    double progress,
+    String partOfDay,
+  ) {
     if (iconCode.startsWith('01')) {
       if (partOfDay == 'Світанок' || partOfDay == 'Вечір') {
         return _HorizonSunPainter(progress, isSunset: partOfDay == 'Вечір');
       }
-      return iconCode.contains('d') ? _SunPainter(progress) : _MoonPainter(progress);
+      return iconCode.contains('d')
+          ? _SunPainter(progress)
+          : _MoonPainter(progress);
     } else if (iconCode.startsWith('02')) {
-      return _PartlyCloudyPainter(progress, isNight: iconCode.contains('n'), partOfDay: partOfDay);
+      return _PartlyCloudyPainter(
+        progress,
+        isNight: iconCode.contains('n'),
+        partOfDay: partOfDay,
+      );
     } else if (iconCode.startsWith('03') || iconCode.startsWith('04')) {
       return _CloudPainter(progress, isNight: iconCode.contains('n'));
     } else if (iconCode.startsWith('09') || iconCode.startsWith('10')) {
@@ -195,7 +229,9 @@ class _HorizonSunPainter extends CustomPainter {
     final lineThickness = size.width * 0.02;
 
     canvas.save();
-    canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY - (lineThickness / 2)));
+    canvas.clipRect(
+      Rect.fromLTRB(0, 0, size.width, horizonY - (lineThickness / 2)),
+    );
 
     final glowPaint = Paint()
       ..color = glowColor.withOpacity(0.4)
@@ -323,39 +359,103 @@ class _MoonPainter extends CustomPainter {
 
     canvas.drawCircle(Offset.zero, radius, moonPaint);
     canvas.save();
-    canvas.clipPath(Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: radius)));
+    canvas.clipPath(
+      Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: radius)),
+    );
 
     final moonShadowPaint = Paint()
       ..color = shadowColor.withOpacity(0.7)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
-    canvas.drawCircle(Offset(radius * 0.15, radius * 0.15), radius * 0.85, moonShadowPaint);
+    canvas.drawCircle(
+      Offset(radius * 0.15, radius * 0.15),
+      radius * 0.85,
+      moonShadowPaint,
+    );
 
-    void drawIrregularCrater(double x, double y, double w, double h, double angle) {
+    void drawIrregularCrater(
+      double x,
+      double y,
+      double w,
+      double h,
+      double angle,
+    ) {
       canvas.save();
       canvas.translate(x, y);
       canvas.rotate(angle);
 
       canvas.drawOval(
-          Rect.fromCenter(center: Offset.zero, width: w, height: h),
-          Paint()..color = shadowColor
+        Rect.fromCenter(center: Offset.zero, width: w, height: h),
+        Paint()..color = shadowColor,
       );
 
       canvas.drawOval(
-          Rect.fromCenter(center: Offset(w * 0.1, h * 0.15), width: w * 0.85, height: h * 0.85),
-          Paint()..color = moonBaseColor
+        Rect.fromCenter(
+          center: Offset(w * 0.1, h * 0.15),
+          width: w * 0.85,
+          height: h * 0.85,
+        ),
+        Paint()..color = moonBaseColor,
       );
 
       canvas.restore();
     }
 
-    drawIrregularCrater(-radius * 0.5, -radius * 0.6, radius * 0.45, radius * 0.3, -0.2);
-    drawIrregularCrater(radius * 0.6, -radius * 0.4, radius * 0.35, radius * 0.5, 0.4);
-    drawIrregularCrater(-radius * 0.75, radius * 0.1, radius * 0.5, radius * 0.25, 0.5);
-    drawIrregularCrater(radius * 0.1, -radius * 0.2, radius * 0.25, radius * 0.18, 0.0);
-    drawIrregularCrater(radius * 0.45, radius * 0.65, radius * 0.6, radius * 0.3, -0.3);
-    drawIrregularCrater(-radius * 0.2, radius * 0.55, radius * 0.35, radius * 0.2, 0.1);
-    drawIrregularCrater(radius * 0.8, radius * 0.2, radius * 0.4, radius * 0.6, 0.2);
-    drawIrregularCrater(-radius * 0.1, -radius * 0.8, radius * 0.3, radius * 0.2, 0.1);
+    drawIrregularCrater(
+      -radius * 0.5,
+      -radius * 0.6,
+      radius * 0.45,
+      radius * 0.3,
+      -0.2,
+    );
+    drawIrregularCrater(
+      radius * 0.6,
+      -radius * 0.4,
+      radius * 0.35,
+      radius * 0.5,
+      0.4,
+    );
+    drawIrregularCrater(
+      -radius * 0.75,
+      radius * 0.1,
+      radius * 0.5,
+      radius * 0.25,
+      0.5,
+    );
+    drawIrregularCrater(
+      radius * 0.1,
+      -radius * 0.2,
+      radius * 0.25,
+      radius * 0.18,
+      0.0,
+    );
+    drawIrregularCrater(
+      radius * 0.45,
+      radius * 0.65,
+      radius * 0.6,
+      radius * 0.3,
+      -0.3,
+    );
+    drawIrregularCrater(
+      -radius * 0.2,
+      radius * 0.55,
+      radius * 0.35,
+      radius * 0.2,
+      0.1,
+    );
+    drawIrregularCrater(
+      radius * 0.8,
+      radius * 0.2,
+      radius * 0.4,
+      radius * 0.6,
+      0.2,
+    );
+    drawIrregularCrater(
+      -radius * 0.1,
+      -radius * 0.8,
+      radius * 0.3,
+      radius * 0.2,
+      0.1,
+    );
 
     canvas.restore();
     canvas.restore();
@@ -397,10 +497,7 @@ class _CloudPainter extends CustomPainter {
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
       );
 
-      canvas.drawPath(
-        path,
-        paint..color = Colors.white,
-      );
+      canvas.drawPath(path, paint..color = Colors.white);
       canvas.restore();
     }
 
@@ -413,11 +510,36 @@ class _CloudPainter extends CustomPainter {
     double floatY4 = math.cos(progress * math.pi * 2 + math.pi / 3) * 18;
     double floatY5 = math.sin(progress * math.pi * 2 - math.pi / 6) * 14;
 
-    drawCloud(size.width * 0.1 + moveX * 0.8, size.height * 0.15 + floatY1, 1.4, fade * 0.6);
-    drawCloud(size.width * 0.85 - moveX * 0.5, size.height * 0.25 + floatY2, 1.1, fade * 0.9);
-    drawCloud(size.width * -0.05 + moveX * 1.2, size.height * 0.45 + floatY3, 0.8, fade * 0.4);
-    drawCloud(size.width * 0.75 + moveX * 0.6, size.height * 0.65 + floatY4, 1.7, fade * 0.95);
-    drawCloud(size.width * 0.25 + moveX * 0.9, size.height * 0.85 + floatY5, 1.2, fade * 0.7);
+    drawCloud(
+      size.width * 0.1 + moveX * 0.8,
+      size.height * 0.15 + floatY1,
+      1.4,
+      fade * 0.6,
+    );
+    drawCloud(
+      size.width * 0.85 - moveX * 0.5,
+      size.height * 0.25 + floatY2,
+      1.1,
+      fade * 0.9,
+    );
+    drawCloud(
+      size.width * -0.05 + moveX * 1.2,
+      size.height * 0.45 + floatY3,
+      0.8,
+      fade * 0.4,
+    );
+    drawCloud(
+      size.width * 0.75 + moveX * 0.6,
+      size.height * 0.65 + floatY4,
+      1.7,
+      fade * 0.95,
+    );
+    drawCloud(
+      size.width * 0.25 + moveX * 0.9,
+      size.height * 0.85 + floatY5,
+      1.2,
+      fade * 0.7,
+    );
   }
 
   @override
@@ -525,7 +647,9 @@ class _FogPainter extends CustomPainter {
       double phaseY = (progress * math.pi * 1.5) + (i * 1.5);
 
       double x = size.width * 0.5 + math.sin(phaseX) * (size.width * 0.6);
-      double y = size.height * (0.15 + i * 0.12) + math.cos(phaseY) * (size.height * 0.15);
+      double y =
+          size.height * (0.15 + i * 0.12) +
+          math.cos(phaseY) * (size.height * 0.15);
 
       double w = size.width * 2.2;
       double h = size.height * 0.45;
@@ -548,7 +672,11 @@ class _PartlyCloudyPainter extends CustomPainter {
   final bool isNight;
   final String partOfDay;
 
-  _PartlyCloudyPainter(this.progress, {required this.isNight, required this.partOfDay});
+  _PartlyCloudyPainter(
+    this.progress, {
+    required this.isNight,
+    required this.partOfDay,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -559,7 +687,10 @@ class _PartlyCloudyPainter extends CustomPainter {
     if (isNight) {
       _MoonPainter(progress).paint(canvas, size);
     } else if (partOfDay == 'Світанок' || partOfDay == 'Вечір') {
-      _HorizonSunPainter(progress, isSunset: partOfDay == 'Вечір').paint(canvas, size);
+      _HorizonSunPainter(
+        progress,
+        isSunset: partOfDay == 'Вечір',
+      ).paint(canvas, size);
     } else {
       _SunPainter(progress).paint(canvas, size);
     }

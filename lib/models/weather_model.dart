@@ -278,23 +278,6 @@ class CitySuggestion {
     required this.lat,
     required this.lon,
   });
-
-  factory CitySuggestion.fromJson(
-    Map<String, dynamic> json,
-    String translatedCountry,
-    String translatedRegion,
-  ) {
-    final localNames = json['local_names'] ?? {};
-    final ukName = localNames['uk'] ?? json['name'];
-
-    return CitySuggestion(
-      name: ukName,
-      region: translatedRegion,
-      country: translatedCountry,
-      lat: json['lat'],
-      lon: json['lon'],
-    );
-  }
 }
 
 class LocationException implements Exception {

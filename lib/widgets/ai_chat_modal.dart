@@ -66,7 +66,11 @@ class _AiChatModalState extends State<AiChatModal> {
     }
 
     setState(() {
-      widget.chatHistory.insert(0, {'role': 'user', 'content': text, 'isNew': 'false'});
+      widget.chatHistory.insert(0, {
+        'role': 'user',
+        'content': text,
+        'isNew': 'false',
+      });
       _isLoading = true;
     });
 
@@ -76,10 +80,9 @@ class _AiChatModalState extends State<AiChatModal> {
         ? '°C'
         : (widget.selectedUnit == TempUnit.fahrenheit ? '°F' : 'K');
 
-    final chatHistoryForApi = widget.chatHistory.reversed.map((m) => {
-      'role': m['role']!,
-      'content': m['content']!
-    }).toList();
+    final chatHistoryForApi = widget.chatHistory.reversed
+        .map((m) => {'role': m['role']!, 'content': m['content']!})
+        .toList();
 
     final response = await _aiService.sendChatMessage(
       chatHistory: chatHistoryForApi,
@@ -91,12 +94,17 @@ class _AiChatModalState extends State<AiChatModal> {
       setState(() {
         _isLoading = false;
         if (response != null) {
-          widget.chatHistory.insert(0, {'role': 'assistant', 'content': response, 'isNew': 'true'});
+          widget.chatHistory.insert(0, {
+            'role': 'assistant',
+            'content': response,
+            'isNew': 'true',
+          });
         } else {
           widget.chatHistory.insert(0, {
             'role': 'assistant',
-            'content': 'Вибачте, сталася помилка при з\'єднанні. Спробуйте ще раз.',
-            'isNew': 'true'
+            'content':
+                'Вибачте, сталася помилка при з\'єднанні. Спробуйте ще раз.',
+            'isNew': 'true',
           });
         }
       });
@@ -119,10 +127,10 @@ class _AiChatModalState extends State<AiChatModal> {
         child: Container(
           height: MediaQuery.of(context).size.height * 0.75,
           padding: EdgeInsets.only(
-              bottom: totalBottomPadding,
-              left: 16,
-              right: 16,
-              top: 16
+            bottom: totalBottomPadding,
+            left: 16,
+            right: 16,
+            top: 16,
           ),
           decoration: BoxDecoration(
             color: Colors.blueGrey.shade900.withOpacity(0.6),
@@ -172,10 +180,15 @@ class _AiChatModalState extends State<AiChatModal> {
                     final isNewAssistantMsg = !isUser && msg['isNew'] == 'true';
 
                     return Align(
-                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: isUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: isUser
                               ? Colors.blueAccent.withOpacity(0.8)
@@ -183,16 +196,24 @@ class _AiChatModalState extends State<AiChatModal> {
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(20),
                             topRight: const Radius.circular(20),
-                            bottomLeft: isUser ? const Radius.circular(20) : Radius.zero,
-                            bottomRight: isUser ? Radius.zero : const Radius.circular(20),
+                            bottomLeft: isUser
+                                ? const Radius.circular(20)
+                                : Radius.zero,
+                            bottomRight: isUser
+                                ? Radius.zero
+                                : const Radius.circular(20),
                           ),
                         ),
                         child: isNewAssistantMsg
                             ? ChatTypewriterText(text: msg['content']!)
                             : Text(
-                          msg['content']!,
-                          style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.3),
-                        ),
+                                msg['content']!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  height: 1.3,
+                                ),
+                              ),
                       ),
                     );
                   },
@@ -211,10 +232,15 @@ class _AiChatModalState extends State<AiChatModal> {
                         onSubmitted: (_) => _sendMessage(),
                         decoration: InputDecoration(
                           hintText: 'Запитайте будь-що...',
-                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                          ),
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.1),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(25),
                             borderSide: BorderSide.none,
@@ -229,7 +255,10 @@ class _AiChatModalState extends State<AiChatModal> {
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.send_rounded, color: Colors.white),
+                        icon: const Icon(
+                          Icons.send_rounded,
+                          color: Colors.white,
+                        ),
                         onPressed: _sendMessage,
                       ),
                     ),
@@ -253,7 +282,8 @@ class ChatTypewriterText extends StatefulWidget {
   State<ChatTypewriterText> createState() => _ChatTypewriterTextState();
 }
 
-class _ChatTypewriterTextState extends State<ChatTypewriterText> with SingleTickerProviderStateMixin {
+class _ChatTypewriterTextState extends State<ChatTypewriterText>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<int> _characterCount;
 
@@ -283,10 +313,16 @@ class _ChatTypewriterTextState extends State<ChatTypewriterText> with SingleTick
     return AnimatedBuilder(
       animation: _characterCount,
       builder: (context, child) {
-        String visibleText = widget.text.characters.take(_characterCount.value).toString();
+        String visibleText = widget.text.characters
+            .take(_characterCount.value)
+            .toString();
         return Text(
           visibleText,
-          style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.3),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            height: 1.3,
+          ),
         );
       },
     );
