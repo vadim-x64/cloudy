@@ -81,17 +81,29 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
     if (_currentStep >= widget.steps.length) return;
 
     final targetKey = widget.steps[_currentStep].key;
-    final RenderBox? box = targetKey.currentContext?.findRenderObject() as RenderBox?;
+    final currentContext = targetKey.currentContext;
 
-    if (box != null) {
-      final Offset position = box.localToGlobal(Offset.zero);
-      setState(() {
-        _targetRect = Rect.fromLTWH(position.dx, position.dy, box.size.width, box.size.height);
+    if (currentContext != null) {
+      Scrollable.ensureVisible(
+        currentContext,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        alignment: 0.5,
+      ).then((_) {
+        if (!mounted) return;
+        final RenderBox? box = currentContext.findRenderObject() as RenderBox?;
+
+        if (box != null) {
+          final Offset position = box.localToGlobal(Offset.zero);
+          setState(() {
+            _targetRect = Rect.fromLTWH(position.dx, position.dy, box.size.width, box.size.height);
+          });
+
+          if (!_fadeController.isAnimating && !_fadeController.isCompleted) {
+            _fadeController.forward();
+          }
+        }
       });
-
-      if (!_fadeController.isAnimating && !_fadeController.isCompleted) {
-        _fadeController.forward();
-      }
     }
   }
 
@@ -110,6 +122,17 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
       });
     } else {
       _closeTutorial();
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      setState(() {
+        _currentStep--;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _calculateTargetRect();
+      });
     }
   }
 
@@ -263,23 +286,36 @@ class _TutorialOverlayState extends State<TutorialOverlay> with TickerProviderSt
                                 style: TextButton.styleFrom(
                                   foregroundColor: Colors.white.withValues(alpha: 0.6),
                                 ),
-                                child: const Text('Пропустити всі'),
+                                child: const Text('Пропустити'),
                               ),
-                              ElevatedButton(
-                                onPressed: _nextStep,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: accentColor,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
+                              Row(
+                                children: [
+                                  if (_currentStep > 0)
+                                    TextButton(
+                                      onPressed: _previousStep,
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.white.withValues(alpha: 0.9),
+                                      ),
+                                      child: const Text('Назад'),
+                                    ),
+                                  if (_currentStep > 0) const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: _nextStep,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: accentColor,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                    ),
+                                    child: Text(
+                                      _currentStep == widget.steps.length - 1 ? 'Зрозуміло!' : 'Далі',
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                ),
-                                child: Text(
-                                  _currentStep == widget.steps.length - 1 ? 'Зрозуміло!' : 'Далі',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
+                                ],
                               ),
                             ],
                           ),
