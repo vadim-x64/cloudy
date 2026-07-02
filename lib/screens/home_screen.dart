@@ -16,6 +16,7 @@ import '../widgets/weather_map_modal.dart';
 import '../widgets/tutorial_overlay.dart';
 import 'dart:math' as math;
 import 'app_info_screen.dart';
+import 'settings_screen.dart';
 
 enum TempUnit { celsius, fahrenheit, kelvin }
 
@@ -1057,35 +1058,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                         },
                                       ),
                                       IconButton(
-                                        icon: Icon(
-                                          _alwaysShowTutorial ? Icons.tips_and_updates : Icons.tips_and_updates_outlined,
-                                          color: _alwaysShowTutorial ? const Color(0xFFc8ff00) : Colors.white, // Твій лаймовий акцент
+                                        icon: const Icon(
+                                          Icons.tune_rounded, // Або Icons.build_circle_outlined, якщо більше подобається ключ
+                                          color: Colors.white,
                                           size: 22,
                                         ),
-                                        tooltip: 'Показувати підказки',
+                                        tooltip: 'Налаштування',
                                         onPressed: () async {
-                                          final prefs = await SharedPreferences.getInstance();
-                                          setState(() {
-                                            _alwaysShowTutorial = !_alwaysShowTutorial;
-                                          });
-                                          await prefs.setBool('always_show_tutorial', _alwaysShowTutorial);
-
+                                          // Перехід на екран налаштувань з плавною анімацією
+                                          await Navigator.of(context).push(
+                                            PageRouteBuilder(
+                                              transitionDuration: const Duration(milliseconds: 500),
+                                              reverseTransitionDuration: const Duration(milliseconds: 500),
+                                              pageBuilder: (context, animation, secondaryAnimation) =>
+                                                  SettingsScreen(
+                                                    backgroundColors: _getBackgroundColors(),
+                                                  ),
+                                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                                final curvedAnimation = CurvedAnimation(
+                                                  parent: animation,
+                                                  curve: Curves.easeInOutCubic,
+                                                );
+                                                return SlideTransition(
+                                                  position: Tween<Offset>(
+                                                    begin: const Offset(1.0, 0.0),
+                                                    end: Offset.zero,
+                                                  ).animate(curvedAnimation),
+                                                  child: child,
+                                                );
+                                              },
+                                            ),
+                                          );
+                                          // Після повернення оновлюємо налаштування (на випадок, якщо тумблер перемкнули)
                                           if (mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                    _alwaysShowTutorial
-                                                        ? 'Підказки увімкнено (показуватимуться при вході)'
-                                                        : 'Підказки вимкнено'
-                                                ),
-                                                backgroundColor: Colors.blueGrey.shade900.withOpacity(0.9),
-                                                duration: const Duration(seconds: 2),
-                                                behavior: SnackBarBehavior.floating,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(15),
-                                                ),
-                                              ),
-                                            );
+                                            _loadSettings();
                                           }
                                         },
                                       ),

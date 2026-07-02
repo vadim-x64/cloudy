@@ -213,7 +213,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
 
             Positioned.fill(
               child: GestureDetector(
-                onTap: _nextStep,
+                onTap: () {},
                 behavior: HitTestBehavior.opaque,
                 child: Container(color: Colors.transparent),
               ),
