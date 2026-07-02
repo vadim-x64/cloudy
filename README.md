@@ -360,3 +360,7 @@ AI_CHAT_PROMPT=your_prompt
 Copyright © 2026 V. Voitsekhovskyi. All rights reserved.
 This software and its source code are proprietary and confidential.
 Unauthorized copying, modification, distribution, publication, or use of any part of this project is strictly prohibited without prior written permission from the author.
+
+---
+
+Застосунок запакований в архів під назвою app-release.zip в репозиторії. 
