@@ -17,6 +17,7 @@ import '../widgets/tutorial_overlay.dart';
 import 'dart:math' as math;
 import 'app_info_screen.dart';
 import 'settings_screen.dart';
+import '../services/widget_service.dart';
 
 enum TempUnit { celsius, fahrenheit, kelvin }
 
@@ -343,6 +344,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _showDetails = false;
       });
       _checkAndShowTutorial();
+      WidgetService.updateWeatherWidget(_weather!);
     } catch (e) {
       if (e is LocationException) {
         _showLocationErrorDialog(e);

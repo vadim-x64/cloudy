@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:home_widget/home_widget.dart';
 
 class SettingsScreen extends StatefulWidget {
   final List<Color> backgroundColors;
@@ -132,6 +133,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
                             value: _alwaysShowTutorial,
                             onChanged: _toggleTutorial,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      _buildGlassContainer(
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text(
+                            'Додати віджет на екран',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: const Padding(
+                            padding: EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              'Встановити розумний віджет погоди Cloudy на робочий стіл вашого смартфона.',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                          leading: const Icon(
+                            Icons.widgets_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.add_circle, color: Color(0xFFC8FF00), size: 28),
+                            onPressed: () async {
+                              await HomeWidget.requestPinWidget(
+                                name: 'WeatherWidgetProvider',
+                                androidName: 'WeatherWidgetProvider',
+                              );
+                            },
                           ),
                         ),
                       ),
