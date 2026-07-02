@@ -35,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey _tempKey = GlobalKey();
   final GlobalKey _detailsKey = GlobalKey();
   final GlobalKey _aiChatKey = GlobalKey();
+  final GlobalKey _locationKey = GlobalKey();
 
   WeatherModel? _weather;
   DateTime? _lastUpdated;
@@ -55,9 +56,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isSettingsExpanded = false;
   final List<Map<String, String>> _aiChatHistory = [];
 
+  bool _alwaysShowTutorial = false;
+  bool _tutorialShownThisSession = false;
+
   @override
   void initState() {
     super.initState();
+
+    _loadSettings();
 
     WidgetsBinding.instance.addObserver(this);
     _loadWeatherByLocation();
@@ -80,12 +86,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _alwaysShowTutorial = prefs.getBool('always_show_tutorial') ?? false;
+    });
+  }
+
   Future<void> _checkAndShowTutorial() async {
+    if (_tutorialShownThisSession) return; // Показувати лише раз за сесію додатка
+
     final prefs = await SharedPreferences.getInstance();
     final isFirstLaunch = prefs.getBool('is_first_launch') ?? true;
 
-    if (isFirstLaunch && _weather != null && mounted) {
-      await prefs.setBool('is_first_launch', false);
+    if ((isFirstLaunch || _alwaysShowTutorial) && _weather != null && mounted) {
+      if (isFirstLaunch) {
+        await prefs.setBool('is_first_launch', false);
+      }
+      _tutorialShownThisSession = true; // Фіксуємо, що в цій сесії вже показали
 
       Future.delayed(const Duration(milliseconds: 1000), () {
         if (!mounted) return;
@@ -95,31 +113,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             key: _searchKey,
             title: 'Розумний пошук',
             description:
-                'Шукайте будь-яке місто у світі, щоб дізнатися там погоду.',
+            'Шукайте будь-яке місто у світі, щоб дізнатися там погоду.',
           ),
           TutorialStep(
             key: _settingsKey,
-            title: 'Налаштування та Карта',
+            title: 'Меню налаштувань',
             description:
-                'Змінюйте одиниці виміру або відкривайте глобальну погодну карту з шарами опадів.',
+            'Натисніть на шестерню, щоб змінити одиниці виміру, відкрити погодну карту, дізнатися більше про застосунок або увімкнути/вимкнути показ цих підказок при старті.', // <-- Оновлено опис
+          ),
+          TutorialStep(
+            key: _locationKey,
+            title: 'Моя локація',
+            description:
+            'Натисніть сюди, щоб миттєво визначити координати по GPS і оновити погоду для вашого поточного місця.',
           ),
           TutorialStep(
             key: _tempKey,
             title: 'Секретна анімація',
             description:
-                'Натисніть на температуру, щоб побачити круту повноекранну погодну анімацію!',
+            'Натисніть на температуру, щоб побачити круту повноекранну погодну анімацію!',
           ),
           TutorialStep(
             key: _detailsKey,
             title: 'Більше деталей',
             description:
-                'Розгорніть це меню для перегляду вологості, тиску, якості повітря та прогнозу на 5 днів.',
+            'Розгорніть це меню для перегляду вологості, тиску, якості повітря та прогнозу на 5 днів.',
           ),
           TutorialStep(
             key: _aiChatKey,
             title: 'ШІ-Асистент',
             description:
-                'Ваш персональний метеоролог! Запитуйте поради щодо одягу або парасолі.',
+            'Ваш персональний метеоролог! Запитуйте поради щодо одягу або парасолі.',
           ),
         ], _weather!.partOfDay);
       });
@@ -1032,6 +1056,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                           );
                                         },
                                       ),
+                                      IconButton(
+                                        icon: Icon(
+                                          _alwaysShowTutorial ? Icons.tips_and_updates : Icons.tips_and_updates_outlined,
+                                          color: _alwaysShowTutorial ? const Color(0xFFc8ff00) : Colors.white, // Твій лаймовий акцент
+                                          size: 22,
+                                        ),
+                                        tooltip: 'Показувати підказки',
+                                        onPressed: () async {
+                                          final prefs = await SharedPreferences.getInstance();
+                                          setState(() {
+                                            _alwaysShowTutorial = !_alwaysShowTutorial;
+                                          });
+                                          await prefs.setBool('always_show_tutorial', _alwaysShowTutorial);
+
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                    _alwaysShowTutorial
+                                                        ? 'Підказки увімкнено (показуватимуться при вході)'
+                                                        : 'Підказки вимкнено'
+                                                ),
+                                                backgroundColor: Colors.blueGrey.shade900.withOpacity(0.9),
+                                                duration: const Duration(seconds: 2),
+                                                behavior: SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(15),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                      ),
                                     ],
                                     AnimatedRotation(
                                       turns: _isSettingsExpanded ? 0.5 : 0.0,
@@ -1058,6 +1115,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                             const SizedBox(width: 8),
                             Container(
+                              key: _locationKey,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 shape: BoxShape.circle,
