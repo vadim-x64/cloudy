@@ -179,11 +179,17 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
   }
 
   CustomPainter _getPainterForWeather(
-    String iconCode,
-    double progress,
-    String partOfDay,
-  ) {
-    if (iconCode.startsWith('01')) {
+      String iconCode,
+      double progress,
+      String partOfDay,
+      ) {
+    if (iconCode == 'wind') {
+      return _WindPainter(progress);
+    } else if (iconCode == 'sleet') {
+      return _SleetPainter(progress);
+    } else if (iconCode == '10d' || iconCode == '10n') {
+      return _SunAndRainPainter(progress, isNight: iconCode.contains('n'), partOfDay: partOfDay);
+    } else if (iconCode.startsWith('01')) {
       if (partOfDay == 'Світанок' || partOfDay == 'Вечір') {
         return _HorizonSunPainter(progress, isSunset: partOfDay == 'Вечір');
       }
@@ -198,7 +204,7 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
       );
     } else if (iconCode.startsWith('03') || iconCode.startsWith('04')) {
       return _CloudPainter(progress, isNight: iconCode.contains('n'));
-    } else if (iconCode.startsWith('09') || iconCode.startsWith('10')) {
+    } else if (iconCode.startsWith('09')) {
       return _RainPainter(progress);
     } else if (iconCode.startsWith('11')) {
       return _StormPainter(progress);
@@ -701,4 +707,108 @@ class _PartlyCloudyPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _PartlyCloudyPainter oldDelegate) => true;
+}
+
+class _WindPainter extends CustomPainter {
+  final double progress;
+
+  _WindPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final rand = math.Random(123);
+
+    for (int i = 0; i < 15; i++) {
+      double startY = rand.nextDouble() * size.height;
+      double speedX = rand.nextDouble() * 3 + 2.0;
+
+      // Лінії вітру летять зліва направо
+      double x = (rand.nextDouble() * size.width + (progress * 10 * speedX * size.width * 0.2)) % size.width;
+
+      Path path = Path();
+      path.moveTo(x, startY);
+      path.quadraticBezierTo(
+          x + 50,
+          startY - 10 * math.sin(progress * math.pi * 4 + i),
+          x + 100,
+          startY
+      );
+
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WindPainter oldDelegate) => true;
+}
+
+class _SunAndRainPainter extends CustomPainter {
+  final double progress;
+  final bool isNight;
+  final String partOfDay;
+
+  _SunAndRainPainter(this.progress, {required this.isNight, required this.partOfDay});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Малюємо трохи сонця/місяця
+    canvas.save();
+    canvas.translate(size.width * 0.15, -size.height * 0.1);
+    canvas.scale(0.85);
+
+    if (isNight) {
+      _MoonPainter(progress).paint(canvas, size);
+    } else if (partOfDay == 'Світанок' || partOfDay == 'Вечір') {
+      _HorizonSunPainter(progress, isSunset: partOfDay == 'Вечір').paint(canvas, size);
+    } else {
+      _SunPainter(progress).paint(canvas, size);
+    }
+    canvas.restore();
+
+    // Малюємо хмари і дощ поверх
+    _CloudPainter(progress, isNight: isNight).paint(canvas, size);
+    _RainPainter(progress).paint(canvas, size);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SunAndRainPainter oldDelegate) => true;
+}
+
+class _SleetPainter extends CustomPainter {
+  final double progress;
+
+  _SleetPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Мікс з хмар, дощу та снігу
+    _CloudPainter(progress, isNight: false).paint(canvas, size);
+    _RainPainter(progress).paint(canvas, size);
+
+    // Робимо сніг трохи швидшим і важчим, щоб підходило під мокрий сніг (sleet)
+    final snowPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final rand = math.Random(999);
+
+    for (int i = 0; i < 60; i++) {
+      double startX = rand.nextDouble() * size.width;
+      double speedY = rand.nextDouble() * 2.5 + 1.5;
+
+      double y = (rand.nextDouble() * size.height + (progress * 5 * speedY * size.height * 0.2)) % size.height;
+      double flakeSize = rand.nextDouble() * 3 + 1.5;
+
+      snowPaint.color = Colors.white.withOpacity(rand.nextDouble() * 0.5 + 0.5);
+      canvas.drawCircle(Offset(startX, y), flakeSize, snowPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SleetPainter oldDelegate) => true;
 }

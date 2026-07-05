@@ -567,93 +567,100 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     double range = maxT - minT;
     double percent = ((tempC - minT) / range).clamp(0.0, 1.0);
 
-    Color thermoColor = tempC >= 10.0
-        ? Colors.redAccent.shade700
-        : Colors.blue.shade500;
+    bool isHot = tempC >= 10.0;
+    Color thermoColor = isHot ? Colors.redAccent.shade700 : Colors.blue.shade500;
 
     return SizedBox(
-      height: 120,
+      height: 145, // Трохи збільшили висоту під іконку
       width: 45,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          SizedBox(
-            width: 24,
-            child: Stack(
-              alignment: Alignment.bottomCenter,
+          MiniThermoIcon(isHot: isHot), // Наша нова анімована іконка
+          const SizedBox(height: 5),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 12,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white54, width: 1),
-                  ),
-                ),
-                TweenAnimationBuilder<double>(
-                  tween: Tween<double>(
-                    begin: 0.15,
-                    end: (percent * 0.75) + 0.15,
-                  ),
-                  duration: const Duration(milliseconds: 1500),
-                  curve: Curves.elasticOut,
-                  builder: (context, value, child) {
-                    return FractionallySizedBox(
-                      heightFactor: value,
-                      alignment: Alignment.bottomCenter,
-                      child: child,
-                    );
-                  },
-                  child: Container(
-                    width: 8,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: thermoColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                Container(
+                SizedBox(
                   width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: thermoColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white54, width: 1),
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      Container(
+                        width: 12,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white54, width: 1),
+                        ),
+                      ),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(
+                          begin: 0.15,
+                          end: (percent * 0.75) + 0.15,
+                        ),
+                        duration: const Duration(milliseconds: 1500),
+                        curve: Curves.elasticOut,
+                        builder: (context, value, child) {
+                          return FractionallySizedBox(
+                            heightFactor: value,
+                            alignment: Alignment.bottomCenter,
+                            child: child,
+                          );
+                        },
+                        child: Container(
+                          width: 8,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: thermoColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: thermoColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white54, width: 1),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 14,
+                        right: 6,
+                        child: Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.6),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Positioned(
-                  bottom: 14,
-                  right: 6,
-                  child: Container(
-                    width: 5,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.6),
-                      shape: BoxShape.circle,
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 12),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: List.generate(7, (index) {
+                        bool isMajor = index % 2 == 0;
+                        return Container(
+                          height: 2,
+                          width: isMajor ? 12 : 6,
+                          decoration: const BoxDecoration(color: Colors.white),
+                        );
+                      }),
                     ),
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: List.generate(7, (index) {
-                  bool isMajor = index % 2 == 0;
-                  return Container(
-                    height: 2,
-                    width: isMajor ? 12 : 6,
-                    decoration: const BoxDecoration(color: Colors.white),
-                  );
-                }),
-              ),
             ),
           ),
         ],
@@ -2335,4 +2342,54 @@ class AuroraPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant AuroraPainter oldDelegate) => true;
+}
+
+class MiniThermoIcon extends StatefulWidget {
+  final bool isHot;
+  const MiniThermoIcon({super.key, required this.isHot});
+
+  @override
+  State<MiniThermoIcon> createState() => _MiniThermoIconState();
+}
+
+class _MiniThermoIconState extends State<MiniThermoIcon> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        if (widget.isHot) {
+          // Повільне обертання для сонечка
+          return Transform.rotate(
+            angle: _controller.value * 2 * math.pi,
+            child: const Icon(Icons.wb_sunny_rounded, color: Colors.amber, size: 20),
+          );
+        } else {
+          // Пульсація для сніжинки
+          final scale = 0.8 + (math.sin(_controller.value * math.pi * 2).abs() * 0.3);
+          return Transform.scale(
+            scale: scale,
+            child: const Icon(Icons.ac_unit_rounded, color: Colors.lightBlueAccent, size: 20),
+          );
+        }
+      },
+    );
+  }
 }

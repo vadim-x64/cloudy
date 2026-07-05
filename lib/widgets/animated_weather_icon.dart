@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-enum WeatherType { clear, partlyCloudy, cloudy, rain, snow, thunderstorm, fog }
+enum WeatherType { clear, partlyCloudy, cloudy, rain, snow, thunderstorm, fog, wind, sunAndRain, sleet }
 
 class AnimatedWeatherIcon extends StatefulWidget {
   final String iconCode;
@@ -43,15 +43,21 @@ class _AnimatedWeatherIconState extends State<AnimatedWeatherIcon>
     bool isDay = widget.iconCode.contains('d');
     WeatherType type;
 
-    if (widget.iconCode.startsWith('01')) {
+    // Нова логіка визначення
+    if (widget.iconCode == 'wind') {
+      type = WeatherType.wind;
+    } else if (widget.iconCode == 'sleet') {
+      type = WeatherType.sleet;
+    } else if (widget.iconCode == '10d' || widget.iconCode == '10n') {
+      type = WeatherType.sunAndRain; // Дощ + хмари + прояснення
+    } else if (widget.iconCode.startsWith('01')) {
       type = WeatherType.clear;
     } else if (widget.iconCode.startsWith('02')) {
       type = WeatherType.partlyCloudy;
     } else if (widget.iconCode.startsWith('03') ||
         widget.iconCode.startsWith('04')) {
       type = WeatherType.cloudy;
-    } else if (widget.iconCode.startsWith('09') ||
-        widget.iconCode.startsWith('10')) {
+    } else if (widget.iconCode.startsWith('09')) {
       type = WeatherType.rain;
     } else if (widget.iconCode.startsWith('11')) {
       type = WeatherType.thunderstorm;
@@ -152,12 +158,57 @@ class WeatherIconPainter extends CustomPainter {
       case WeatherType.fog:
         _drawFog(canvas, size);
         break;
+      case WeatherType.wind:
+        _drawWind(canvas, size);
+        break;
+      case WeatherType.sunAndRain:
+        if (isNightTime) {
+          _drawMoonAndStars(canvas, size, centerOffset, isPartial: true);
+        } else {
+          _drawSun(canvas, size, centerOffset, isPartial: true);
+        }
+        _drawRain(canvas, size);
+        break;
+      case WeatherType.sleet:
+        _drawRain(canvas, size);
+        _drawSnow(canvas, size);
+        break;
       default:
         break;
     }
 
-    if (type != WeatherType.clear) {
+    if (type != WeatherType.clear && type != WeatherType.wind) {
       _drawClouds(canvas, size, centerOffset);
+    }
+  }
+
+  void _drawWind(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.6)
+      ..strokeWidth = size.width * 0.03
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final double offset = (animationValue * pi * 2);
+
+    // Малюємо кілька вигнутих ліній вітру
+    for (int i = 0; i < 3; i++) {
+      double startX = size.width * 0.1 + (i * size.width * 0.1);
+      double startY = size.height * 0.3 + (i * size.height * 0.2);
+      double waveOffset = sin(offset + i) * 10;
+
+      Path path = Path();
+      path.moveTo(startX, startY);
+      path.quadraticBezierTo(
+          size.width * 0.5,
+          startY - 20 + waveOffset,
+          size.width * 0.8,
+          startY + waveOffset
+      );
+
+      // Анімація прозорості (повітря з'являється і зникає)
+      paint.color = Colors.white.withOpacity(0.3 + (sin(offset + i * 2) + 1) * 0.2);
+      canvas.drawPath(path, paint);
     }
   }
 
