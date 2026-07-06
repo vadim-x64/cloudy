@@ -1483,7 +1483,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 40),
+                              const SizedBox(height: 15),
+                              AnimatedEntrance(
+                                delay: const Duration(milliseconds: 280),
+                                child: _buildWindStatus(_weather!.windSpeed),
+                              ),
+                              const SizedBox(height: 30),
                               if (_weather!.hourlyForecast.isNotEmpty) ...[
                                 AnimatedEntrance(
                                   delay: const Duration(milliseconds: 300),
@@ -1911,6 +1916,147 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+
+  Widget _buildWindStatus(double windSpeed) {
+    String statusText;
+    if (windSpeed <= 1.5) statusText = 'Штиль';
+    else if (windSpeed <= 5.0) statusText = 'Легкий вітер';
+    else if (windSpeed <= 10.0) statusText = 'Помірний вітер';
+    else if (windSpeed <= 15.0) statusText = 'Сильний вітер';
+    else statusText = 'Штормовий вітер';
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        MiniWindIcon(windSpeed: windSpeed),
+        const SizedBox(width: 10),
+        Text(
+          '$statusText • ${windSpeed.toStringAsFixed(1)} м/с',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class MiniWindIcon extends StatefulWidget {
+  final double windSpeed;
+  const MiniWindIcon({super.key, required this.windSpeed});
+
+  @override
+  State<MiniWindIcon> createState() => _MiniWindIconState();
+}
+
+class _MiniWindIconState extends State<MiniWindIcon> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+    _setControllerDuration();
+    _controller.repeat();
+  }
+
+  @override
+  void didUpdateWidget(MiniWindIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.windSpeed != widget.windSpeed) {
+      _setControllerDuration();
+      _controller.repeat();
+    }
+  }
+
+  void _setControllerDuration() {
+    int durationMs = widget.windSpeed > 10.0
+        ? 800
+        : (widget.windSpeed > 5.0 ? 1200 : (widget.windSpeed > 1.5 ? 2000 : 4000));
+    _controller.duration = Duration(milliseconds: durationMs);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return CustomPaint(
+          size: const Size(24, 24),
+          painter: _WindPillPainter(_controller.value, widget.windSpeed),
+        );
+      },
+    );
+  }
+}
+
+class _WindPillPainter extends CustomPainter {
+  final double progress;
+  final double windSpeed;
+
+  _WindPillPainter(this.progress, this.windSpeed);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.0;
+
+    bool isCalm = windSpeed <= 1.5;
+    double t = progress * math.pi * 2;
+
+    for (int i = 0; i < 3; i++) {
+      double y = size.height * 0.3 + i * (size.height * 0.2);
+
+      if (isCalm) {
+        // Легке погойдування для штилю
+        double shiftX = math.sin(t + i) * 2;
+        Path path = Path();
+        path.moveTo(size.width * 0.2 + shiftX, y);
+        path.lineTo(size.width * 0.8 + shiftX, y);
+        paint.color = Colors.white.withOpacity(0.4);
+        canvas.drawPath(path, paint);
+      } else {
+        // Ефект швидкого потоку повітря з градієнтним шлейфом
+        double offset = (progress * size.width * 2 + i * 15) % (size.width * 2);
+        double startX = offset - size.width;
+        double endX = offset;
+
+        Path path = Path();
+        path.moveTo(startX, y);
+        path.quadraticBezierTo(
+            (startX + endX) / 2, y - (math.sin(t * 3 + i) * 2),
+            endX, y
+        );
+
+        paint.shader = LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.0),
+            Colors.white.withOpacity(0.9),
+            Colors.white.withOpacity(0.0)
+          ],
+          stops: const [0.0, 0.8, 1.0],
+        ).createShader(Rect.fromLTRB(startX, y - 2, endX, y + 2));
+
+        canvas.drawPath(path, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WindPillPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.windSpeed != windSpeed;
   }
 }
 
