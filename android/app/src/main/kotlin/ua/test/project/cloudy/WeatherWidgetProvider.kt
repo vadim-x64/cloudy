@@ -18,7 +18,6 @@ class WeatherWidgetProvider : HomeWidgetProvider() {
     ) {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.weather_widget).apply {
-                // Шукаємо шлях до картинки, яку згенерував Flutter
                 val imagePath = widgetData.getString("widget_image", null)
                 if (imagePath != null) {
                     val imgFile = File(imagePath)
@@ -28,7 +27,6 @@ class WeatherWidgetProvider : HomeWidgetProvider() {
                     }
                 }
 
-                // Інтент для відкриття додатка
                 val intent = Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }

@@ -1,7 +1,18 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-enum WeatherType { clear, partlyCloudy, cloudy, rain, snow, thunderstorm, fog, wind, sunAndRain, sleet }
+enum WeatherType {
+  clear,
+  partlyCloudy,
+  cloudy,
+  rain,
+  snow,
+  thunderstorm,
+  fog,
+  wind,
+  sunAndRain,
+  sleet,
+}
 
 class AnimatedWeatherIcon extends StatefulWidget {
   final String iconCode;
@@ -43,13 +54,12 @@ class _AnimatedWeatherIconState extends State<AnimatedWeatherIcon>
     bool isDay = widget.iconCode.contains('d');
     WeatherType type;
 
-    // Нова логіка визначення
     if (widget.iconCode == 'wind') {
       type = WeatherType.wind;
     } else if (widget.iconCode == 'sleet') {
       type = WeatherType.sleet;
     } else if (widget.iconCode == '10d' || widget.iconCode == '10n') {
-      type = WeatherType.sunAndRain; // Дощ + хмари + прояснення
+      type = WeatherType.sunAndRain;
     } else if (widget.iconCode.startsWith('01')) {
       type = WeatherType.clear;
     } else if (widget.iconCode.startsWith('02')) {
@@ -191,7 +201,6 @@ class WeatherIconPainter extends CustomPainter {
 
     final double offset = (animationValue * pi * 2);
 
-    // Малюємо кілька вигнутих ліній вітру
     for (int i = 0; i < 3; i++) {
       double startX = size.width * 0.1 + (i * size.width * 0.1);
       double startY = size.height * 0.3 + (i * size.height * 0.2);
@@ -200,14 +209,15 @@ class WeatherIconPainter extends CustomPainter {
       Path path = Path();
       path.moveTo(startX, startY);
       path.quadraticBezierTo(
-          size.width * 0.5,
-          startY - 20 + waveOffset,
-          size.width * 0.8,
-          startY + waveOffset
+        size.width * 0.5,
+        startY - 20 + waveOffset,
+        size.width * 0.8,
+        startY + waveOffset,
       );
 
-      // Анімація прозорості (повітря з'являється і зникає)
-      paint.color = Colors.white.withOpacity(0.3 + (sin(offset + i * 2) + 1) * 0.2);
+      paint.color = Colors.white.withOpacity(
+        0.3 + (sin(offset + i * 2) + 1) * 0.2,
+      );
       canvas.drawPath(path, paint);
     }
   }

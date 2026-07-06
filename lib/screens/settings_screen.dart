@@ -6,10 +6,7 @@ import 'package:home_widget/home_widget.dart';
 class SettingsScreen extends StatefulWidget {
   final List<Color> backgroundColors;
 
-  const SettingsScreen({
-    super.key,
-    required this.backgroundColors,
-  });
+  const SettingsScreen({super.key, required this.backgroundColors});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -48,7 +45,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Динамічний фон
           AnimatedContainer(
             duration: const Duration(milliseconds: 500),
             width: double.infinity,
@@ -61,7 +57,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          // Ефект розмиття
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -71,14 +66,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SafeArea(
             child: Column(
               children: [
-                // AppBar
                 AppBar(
                   backgroundColor: appBarColor,
                   elevation: 4,
                   shadowColor: Colors.black38,
                   surfaceTintColor: Colors.transparent,
                   leading: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   title: const Text(
@@ -91,10 +88,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   centerTitle: true,
                 ),
-                // Контент налаштувань
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 20,
+                    ),
                     physics: const BouncingScrollPhysics(),
                     children: [
                       _buildGlassContainer(
@@ -120,17 +119,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           leading: Icon(
-                            _alwaysShowTutorial ? Icons.tips_and_updates : Icons.tips_and_updates_outlined,
-                            color: _alwaysShowTutorial ? Colors.white : Colors.white54,
+                            _alwaysShowTutorial
+                                ? Icons.tips_and_updates
+                                : Icons.tips_and_updates_outlined,
+                            color: _alwaysShowTutorial
+                                ? Colors.white
+                                : Colors.white54,
                             size: 28,
                           ),
-                          // Сам перемикач тепер є окремим елементом
                           trailing: Switch(
                             activeColor: Colors.white,
                             activeTrackColor: Colors.white.withOpacity(0.4),
                             inactiveThumbColor: Colors.white54,
                             inactiveTrackColor: Colors.white.withOpacity(0.1),
-                            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                            trackOutlineColor: WidgetStateProperty.all(
+                              Colors.transparent,
+                            ),
                             value: _alwaysShowTutorial,
                             onChanged: _toggleTutorial,
                           ),
@@ -165,7 +169,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             size: 28,
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.add_circle, color: Color(0xFFC8FF00), size: 28),
+                            icon: const Icon(
+                              Icons.add_circle,
+                              color: Color(0xFFC8FF00),
+                              size: 28,
+                            ),
                             onPressed: () async {
                               await HomeWidget.requestPinWidget(
                                 name: 'WeatherWidgetProvider',
@@ -175,7 +183,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                       ),
-                      // Місце для майбутніх налаштувань...
                     ],
                   ),
                 ),

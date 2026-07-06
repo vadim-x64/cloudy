@@ -96,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _checkAndShowTutorial() async {
-    if (_tutorialShownThisSession) return; // Показувати лише раз за сесію додатка
+    if (_tutorialShownThisSession) return;
 
     final prefs = await SharedPreferences.getInstance();
     final isFirstLaunch = prefs.getBool('is_first_launch') ?? true;
@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (isFirstLaunch) {
         await prefs.setBool('is_first_launch', false);
       }
-      _tutorialShownThisSession = true; // Фіксуємо, що в цій сесії вже показали
+      _tutorialShownThisSession = true;
 
       Future.delayed(const Duration(milliseconds: 1000), () {
         if (!mounted) return;
@@ -115,37 +115,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             key: _searchKey,
             title: 'Розумний пошук',
             description:
-            'Шукайте будь-яке місто у світі, щоб дізнатися там погоду.',
+                'Шукайте будь-яке місто у світі, щоб дізнатися там погоду.',
           ),
           TutorialStep(
             key: _settingsKey,
             title: 'Меню налаштувань',
             description:
-            'Натисніть на шестерню, щоб змінити одиниці виміру, відкрити погодну карту, дізнатися більше про застосунок або увімкнути/вимкнути показ цих підказок при старті.', // <-- Оновлено опис
+                'Натисніть на шестерню, щоб змінити одиниці виміру, відкрити погодну карту, дізнатися більше про застосунок або увімкнути/вимкнути показ цих підказок при старті.',
           ),
           TutorialStep(
             key: _locationKey,
             title: 'Моя локація',
             description:
-            'Натисніть сюди, щоб миттєво визначити координати по GPS і оновити погоду для вашого поточного місця.',
+                'Натисніть сюди, щоб миттєво визначити координати по GPS і оновити погоду для вашого поточного місця.',
           ),
           TutorialStep(
             key: _tempKey,
             title: 'Секретна анімація',
             description:
-            'Натисніть на температуру, щоб побачити круту повноекранну погодну анімацію!',
+                'Натисніть на температуру, щоб побачити круту повноекранну погодну анімацію!',
           ),
           TutorialStep(
             key: _detailsKey,
             title: 'Більше деталей',
             description:
-            'Розгорніть це меню для перегляду вологості, тиску, якості повітря та прогнозу на 5 днів.',
+                'Розгорніть це меню для перегляду вологості, тиску, якості повітря та прогнозу на 5 днів.',
           ),
           TutorialStep(
             key: _aiChatKey,
             title: 'ШІ-Асистент',
             description:
-            'Ваш персональний метеоролог! Запитуйте поради щодо одягу або парасолі.',
+                'Ваш персональний метеоролог! Запитуйте поради щодо одягу або парасолі.',
           ),
         ], _weather!.partOfDay);
       });
@@ -568,14 +568,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     double percent = ((tempC - minT) / range).clamp(0.0, 1.0);
 
     bool isHot = tempC >= 10.0;
-    Color thermoColor = isHot ? Colors.redAccent.shade700 : Colors.blue.shade500;
+    Color thermoColor = isHot
+        ? Colors.redAccent.shade700
+        : Colors.blue.shade500;
 
     return SizedBox(
-      height: 145, // Трохи збільшили висоту під іконку
+      height: 145,
       width: 45,
       child: Column(
         children: [
-          MiniThermoIcon(isHot: isHot), // Наша нова анімована іконка
+          MiniThermoIcon(isHot: isHot),
           const SizedBox(height: 5),
           Expanded(
             child: Row(
@@ -1068,37 +1070,60 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                       ),
                                       IconButton(
                                         icon: const Icon(
-                                          Icons.tune_rounded, // Або Icons.build_circle_outlined, якщо більше подобається ключ
+                                          Icons.tune_rounded,
                                           color: Colors.white,
                                           size: 22,
                                         ),
                                         tooltip: 'Налаштування',
                                         onPressed: () async {
-                                          // Перехід на екран налаштувань з плавною анімацією
                                           await Navigator.of(context).push(
                                             PageRouteBuilder(
-                                              transitionDuration: const Duration(milliseconds: 500),
-                                              reverseTransitionDuration: const Duration(milliseconds: 500),
-                                              pageBuilder: (context, animation, secondaryAnimation) =>
-                                                  SettingsScreen(
-                                                    backgroundColors: _getBackgroundColors(),
+                                              transitionDuration:
+                                                  const Duration(
+                                                    milliseconds: 500,
                                                   ),
-                                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                                final curvedAnimation = CurvedAnimation(
-                                                  parent: animation,
-                                                  curve: Curves.easeInOutCubic,
-                                                );
-                                                return SlideTransition(
-                                                  position: Tween<Offset>(
-                                                    begin: const Offset(1.0, 0.0),
-                                                    end: Offset.zero,
-                                                  ).animate(curvedAnimation),
-                                                  child: child,
-                                                );
-                                              },
+                                              reverseTransitionDuration:
+                                                  const Duration(
+                                                    milliseconds: 500,
+                                                  ),
+                                              pageBuilder:
+                                                  (
+                                                    context,
+                                                    animation,
+                                                    secondaryAnimation,
+                                                  ) => SettingsScreen(
+                                                    backgroundColors:
+                                                        _getBackgroundColors(),
+                                                  ),
+                                              transitionsBuilder:
+                                                  (
+                                                    context,
+                                                    animation,
+                                                    secondaryAnimation,
+                                                    child,
+                                                  ) {
+                                                    final curvedAnimation =
+                                                        CurvedAnimation(
+                                                          parent: animation,
+                                                          curve: Curves
+                                                              .easeInOutCubic,
+                                                        );
+                                                    return SlideTransition(
+                                                      position:
+                                                          Tween<Offset>(
+                                                            begin: const Offset(
+                                                              1.0,
+                                                              0.0,
+                                                            ),
+                                                            end: Offset.zero,
+                                                          ).animate(
+                                                            curvedAnimation,
+                                                          ),
+                                                      child: child,
+                                                    );
+                                                  },
                                             ),
                                           );
-                                          // Після повернення оновлюємо налаштування (на випадок, якщо тумблер перемкнули)
                                           if (mounted) {
                                             _loadSettings();
                                           }
@@ -1920,11 +1945,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _buildWindStatus(double windSpeed) {
     String statusText;
-    if (windSpeed <= 1.5) statusText = 'Штиль';
-    else if (windSpeed <= 5.0) statusText = 'Легкий вітер';
-    else if (windSpeed <= 10.0) statusText = 'Помірний вітер';
-    else if (windSpeed <= 15.0) statusText = 'Сильний вітер';
-    else statusText = 'Штормовий вітер';
+    if (windSpeed <= 1.5)
+      statusText = 'Штиль';
+    else if (windSpeed <= 5.0)
+      statusText = 'Легкий вітер';
+    else if (windSpeed <= 10.0)
+      statusText = 'Помірний вітер';
+    else if (windSpeed <= 15.0)
+      statusText = 'Сильний вітер';
+    else
+      statusText = 'Штормовий вітер';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -1947,13 +1977,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
 class MiniWindIcon extends StatefulWidget {
   final double windSpeed;
+
   const MiniWindIcon({super.key, required this.windSpeed});
 
   @override
   State<MiniWindIcon> createState() => _MiniWindIconState();
 }
 
-class _MiniWindIconState extends State<MiniWindIcon> with SingleTickerProviderStateMixin {
+class _MiniWindIconState extends State<MiniWindIcon>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -1976,7 +2008,9 @@ class _MiniWindIconState extends State<MiniWindIcon> with SingleTickerProviderSt
   void _setControllerDuration() {
     int durationMs = widget.windSpeed > 10.0
         ? 800
-        : (widget.windSpeed > 5.0 ? 1200 : (widget.windSpeed > 1.5 ? 2000 : 4000));
+        : (widget.windSpeed > 5.0
+              ? 1200
+              : (widget.windSpeed > 1.5 ? 2000 : 4000));
     _controller.duration = Duration(milliseconds: durationMs);
   }
 
@@ -2020,7 +2054,6 @@ class _WindPillPainter extends CustomPainter {
       double y = size.height * 0.3 + i * (size.height * 0.2);
 
       if (isCalm) {
-        // Легке погойдування для штилю
         double shiftX = math.sin(t + i) * 2;
         Path path = Path();
         path.moveTo(size.width * 0.2 + shiftX, y);
@@ -2028,7 +2061,6 @@ class _WindPillPainter extends CustomPainter {
         paint.color = Colors.white.withOpacity(0.4);
         canvas.drawPath(path, paint);
       } else {
-        // Ефект швидкого потоку повітря з градієнтним шлейфом
         double offset = (progress * size.width * 2 + i * 15) % (size.width * 2);
         double startX = offset - size.width;
         double endX = offset;
@@ -2036,15 +2068,17 @@ class _WindPillPainter extends CustomPainter {
         Path path = Path();
         path.moveTo(startX, y);
         path.quadraticBezierTo(
-            (startX + endX) / 2, y - (math.sin(t * 3 + i) * 2),
-            endX, y
+          (startX + endX) / 2,
+          y - (math.sin(t * 3 + i) * 2),
+          endX,
+          y,
         );
 
         paint.shader = LinearGradient(
           colors: [
             Colors.white.withOpacity(0.0),
             Colors.white.withOpacity(0.9),
-            Colors.white.withOpacity(0.0)
+            Colors.white.withOpacity(0.0),
           ],
           stops: const [0.0, 0.8, 1.0],
         ).createShader(Rect.fromLTRB(startX, y - 2, endX, y + 2));
@@ -2056,7 +2090,8 @@ class _WindPillPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _WindPillPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.windSpeed != windSpeed;
+    return oldDelegate.progress != progress ||
+        oldDelegate.windSpeed != windSpeed;
   }
 }
 
@@ -2492,13 +2527,15 @@ class AuroraPainter extends CustomPainter {
 
 class MiniThermoIcon extends StatefulWidget {
   final bool isHot;
+
   const MiniThermoIcon({super.key, required this.isHot});
 
   @override
   State<MiniThermoIcon> createState() => _MiniThermoIconState();
 }
 
-class _MiniThermoIconState extends State<MiniThermoIcon> with SingleTickerProviderStateMixin {
+class _MiniThermoIconState extends State<MiniThermoIcon>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -2522,17 +2559,24 @@ class _MiniThermoIconState extends State<MiniThermoIcon> with SingleTickerProvid
       animation: _controller,
       builder: (context, child) {
         if (widget.isHot) {
-          // Повільне обертання для сонечка
           return Transform.rotate(
             angle: _controller.value * 2 * math.pi,
-            child: const Icon(Icons.wb_sunny_rounded, color: Colors.amber, size: 20),
+            child: const Icon(
+              Icons.wb_sunny_rounded,
+              color: Colors.amber,
+              size: 20,
+            ),
           );
         } else {
-          // Пульсація для сніжинки
-          final scale = 0.8 + (math.sin(_controller.value * math.pi * 2).abs() * 0.3);
+          final scale =
+              0.8 + (math.sin(_controller.value * math.pi * 2).abs() * 0.3);
           return Transform.scale(
             scale: scale,
-            child: const Icon(Icons.ac_unit_rounded, color: Colors.lightBlueAccent, size: 20),
+            child: const Icon(
+              Icons.ac_unit_rounded,
+              color: Colors.lightBlueAccent,
+              size: 20,
+            ),
           );
         }
       },

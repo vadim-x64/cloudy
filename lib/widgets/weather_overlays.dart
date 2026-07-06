@@ -179,16 +179,20 @@ class _WeatherOverlayManagerState extends State<WeatherOverlayManager>
   }
 
   CustomPainter _getPainterForWeather(
-      String iconCode,
-      double progress,
-      String partOfDay,
-      ) {
+    String iconCode,
+    double progress,
+    String partOfDay,
+  ) {
     if (iconCode == 'wind') {
       return _WindPainter(progress);
     } else if (iconCode == 'sleet') {
       return _SleetPainter(progress);
     } else if (iconCode == '10d' || iconCode == '10n') {
-      return _SunAndRainPainter(progress, isNight: iconCode.contains('n'), partOfDay: partOfDay);
+      return _SunAndRainPainter(
+        progress,
+        isNight: iconCode.contains('n'),
+        partOfDay: partOfDay,
+      );
     } else if (iconCode.startsWith('01')) {
       if (partOfDay == 'Світанок' || partOfDay == 'Вечір') {
         return _HorizonSunPainter(progress, isSunset: partOfDay == 'Вечір');
@@ -728,16 +732,18 @@ class _WindPainter extends CustomPainter {
       double startY = rand.nextDouble() * size.height;
       double speedX = rand.nextDouble() * 3 + 2.0;
 
-      // Лінії вітру летять зліва направо
-      double x = (rand.nextDouble() * size.width + (progress * 10 * speedX * size.width * 0.2)) % size.width;
+      double x =
+          (rand.nextDouble() * size.width +
+              (progress * 10 * speedX * size.width * 0.2)) %
+          size.width;
 
       Path path = Path();
       path.moveTo(x, startY);
       path.quadraticBezierTo(
-          x + 50,
-          startY - 10 * math.sin(progress * math.pi * 4 + i),
-          x + 100,
-          startY
+        x + 50,
+        startY - 10 * math.sin(progress * math.pi * 4 + i),
+        x + 100,
+        startY,
       );
 
       canvas.drawPath(path, paint);
@@ -753,11 +759,14 @@ class _SunAndRainPainter extends CustomPainter {
   final bool isNight;
   final String partOfDay;
 
-  _SunAndRainPainter(this.progress, {required this.isNight, required this.partOfDay});
+  _SunAndRainPainter(
+    this.progress, {
+    required this.isNight,
+    required this.partOfDay,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Малюємо трохи сонця/місяця
     canvas.save();
     canvas.translate(size.width * 0.15, -size.height * 0.1);
     canvas.scale(0.85);
@@ -765,13 +774,15 @@ class _SunAndRainPainter extends CustomPainter {
     if (isNight) {
       _MoonPainter(progress).paint(canvas, size);
     } else if (partOfDay == 'Світанок' || partOfDay == 'Вечір') {
-      _HorizonSunPainter(progress, isSunset: partOfDay == 'Вечір').paint(canvas, size);
+      _HorizonSunPainter(
+        progress,
+        isSunset: partOfDay == 'Вечір',
+      ).paint(canvas, size);
     } else {
       _SunPainter(progress).paint(canvas, size);
     }
     canvas.restore();
 
-    // Малюємо хмари і дощ поверх
     _CloudPainter(progress, isNight: isNight).paint(canvas, size);
     _RainPainter(progress).paint(canvas, size);
   }
@@ -787,11 +798,9 @@ class _SleetPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Мікс з хмар, дощу та снігу
     _CloudPainter(progress, isNight: false).paint(canvas, size);
     _RainPainter(progress).paint(canvas, size);
 
-    // Робимо сніг трохи швидшим і важчим, щоб підходило під мокрий сніг (sleet)
     final snowPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
@@ -801,7 +810,10 @@ class _SleetPainter extends CustomPainter {
       double startX = rand.nextDouble() * size.width;
       double speedY = rand.nextDouble() * 2.5 + 1.5;
 
-      double y = (rand.nextDouble() * size.height + (progress * 5 * speedY * size.height * 0.2)) % size.height;
+      double y =
+          (rand.nextDouble() * size.height +
+              (progress * 5 * speedY * size.height * 0.2)) %
+          size.height;
       double flakeSize = rand.nextDouble() * 3 + 1.5;
 
       snowPaint.color = Colors.white.withOpacity(rand.nextDouble() * 0.5 + 0.5);

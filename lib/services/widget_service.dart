@@ -1,4 +1,3 @@
-// ===== widget_service.dart =====
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
@@ -9,7 +8,6 @@ class WidgetService {
   static const String androidWidgetName = 'WeatherWidgetProvider';
 
   static Future<void> updateWeatherWidget(WeatherModel weather) async {
-    // Збільшуємо полотно до 900x600, щоб усьому вистачило місця
     await HomeWidget.renderFlutterWidget(
       WeatherWidgetUI(weather: weather),
       logicalSize: const Size(900, 600),
@@ -56,8 +54,12 @@ class WeatherWidgetUI extends StatelessWidget {
         break;
     }
 
-    if (condition.contains('rain') || condition.contains('snow') || condition.contains('fog')) {
-      return baseColors.map((c) => Color.lerp(c, Colors.blueGrey.shade800, 0.55)!).toList();
+    if (condition.contains('rain') ||
+        condition.contains('snow') ||
+        condition.contains('fog')) {
+      return baseColors
+          .map((c) => Color.lerp(c, Colors.blueGrey.shade800, 0.55)!)
+          .toList();
     }
     return baseColors;
   }
@@ -68,9 +70,10 @@ class WeatherWidgetUI extends StatelessWidget {
         ? '${weather.description[0].toUpperCase()}${weather.description.substring(1)}'
         : '';
 
-    final daily = weather.dailyForecast.isNotEmpty ? weather.dailyForecast.first : null;
+    final daily = weather.dailyForecast.isNotEmpty
+        ? weather.dailyForecast.first
+        : null;
 
-    // Обертаємо в ClipRRect, щоб фон гарантовано не вилазив за кути
     return ClipRRect(
       borderRadius: BorderRadius.circular(60),
       child: Container(
@@ -82,13 +85,12 @@ class WeatherWidgetUI extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          border: Border.all(color: Colors.white.withOpacity(0.25), width: 2), // Глянцевий бортик
+          border: Border.all(color: Colors.white.withOpacity(0.25), width: 2),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 45, vertical: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Верхній блок: Місто та опис
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -106,7 +108,10 @@ class WeatherWidgetUI extends StatelessWidget {
                 ),
                 const SizedBox(width: 20),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
@@ -122,10 +127,7 @@ class WeatherWidgetUI extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 10),
-
-            // Середній блок: Температура та іконка
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,8 +169,6 @@ class WeatherWidgetUI extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Нижній блок: Прогноз
             Container(
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
               decoration: BoxDecoration(
