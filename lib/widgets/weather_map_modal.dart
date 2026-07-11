@@ -241,6 +241,7 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
         point.latitude,
         point.longitude,
       );
+
       if (mounted) {
         setState(() {
           _tappedLocationInfo = {
@@ -248,6 +249,7 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
             'lon': point.longitude,
             'name': weather.cityName,
             'temp': weather.temperature,
+            'aqi': weather.aqi,
           };
         });
       }
@@ -259,6 +261,7 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
             'lon': point.longitude,
             'name': 'Невідоме місце',
             'temp': null,
+            'aqi': null,
           };
         });
       }
@@ -266,6 +269,153 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
       if (mounted) {
         setState(() => _isLoadingTappedLocation = false);
       }
+    }
+  }
+
+  Widget? _buildMapLegend() {
+    List<Color> colors = [];
+    List<String> labels = [];
+    String title = '';
+
+    switch (_activeFilter) {
+      case 'temp_new':
+        colors = [
+          const Color(0xFF821692),
+          const Color(0xFF8257DB),
+          const Color(0xFF208CEC),
+          const Color(0xFF20C0E2),
+          const Color(0xFFF7D626),
+          const Color(0xFFFF8C00),
+          const Color(0xFFFF0000),
+        ];
+        labels = ['-40°C', '-20°C', '0°C', '10°C', '20°C', '30°C', '40°C'];
+        title = 'Температурні шари';
+        break;
+      case 'pressure_new':
+        colors = [
+          const Color(0xFF0073FF),
+          const Color(0xFF00AAFF),
+          const Color(0xFF4BD0D6),
+          const Color(0xFF8DE7C7),
+          const Color(0xFFB0F720),
+          const Color(0xFFF0B800),
+          const Color(0xFFFB5515),
+        ];
+        labels = ['940', '960', '980', '1000', '1020', '1040', '1060'];
+        title = 'Атмосферний тиск (гПа)';
+        break;
+      case 'wind_new':
+        colors = [
+          Colors.transparent,
+          const Color(0xFFEECECC),
+          const Color(0xFFB3A9B5),
+          const Color(0xFF43228E),
+        ];
+        labels = ['0 м/с', '10 м/с', '25 м/с', '50 м/с'];
+        title = 'Швидкість вітру';
+        break;
+      case 'precipitation_new':
+        colors = [
+          Colors.transparent,
+          const Color(0xFFE2B7A8),
+          const Color(0xFFD688B7),
+          const Color(0xFFBB32AC),
+          const Color(0xFF8B12AF),
+        ];
+        labels = ['0 мм', '0.1 мм', '1 мм', '10 мм', '50 мм'];
+        title = 'Інтенсивність опадів';
+        break;
+      case 'clouds_new':
+        colors = [
+          Colors.transparent,
+          const Color(0xFFFAFAFA),
+          const Color(0xFFE2E2E2),
+          const Color(0xFFC8C8C8),
+          const Color(0xFF9E9E9E),
+        ];
+        labels = ['0%', '25%', '50%', '75%', '100%'];
+        title = 'Хмарне покриття';
+        break;
+      default:
+        return null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.shade900.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 10,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              gradient: LinearGradient(
+                colors: colors,
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: labels
+                .map(
+                  (label) => Text(
+                    label,
+                    style: const TextStyle(color: Colors.white70, fontSize: 10),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getLayerDetailedMetrics() {
+    if (_tappedLocationInfo == null) return '';
+
+    switch (_activeFilter) {
+      case 'temp_new':
+        final t = _tappedLocationInfo!['temp'];
+        return 'Температура: ${t != null ? "${t.round()}°C" : "немає даних"}. Кольорова шкала відображає розподіл температурних мас.';
+
+      case 'pressure_new':
+        return 'Шар атмосферного тиску. Дозволяє відстежувати формування циклонів (низький тиск) та антициклонів (високий тиск) у цій області.';
+
+      case 'precipitation_new':
+        return 'Шар опадів. Кольорові зони на карті показують інтенсивність дощу, снігу чи граду в міліметрах.';
+
+      case 'clouds_new':
+        return 'Шар хмарності. Відображає щільність хмарного покриття у відсотках над обраною територією.';
+
+      case 'wind_new':
+        return 'Шар вітру. Показує швидкість повітряних мас. Темніші кольори вказують на штормові пориви.';
+
+      case 'earthquakes':
+        return 'Шар сейсмічної активності. Орієнтуйся на кольорові зони на карті для оцінки магнітуди поштовхів у цій локації.';
+
+      case 'thunderstorms':
+        return 'Шар грозової активності. Відображає зони підвищеної ймовірності блискавок та шквалів.';
+
+      default:
+        return 'Деталі по цьому шару відображаються на глобальній карті за допомогою кольорової індикації.';
     }
   }
 
@@ -280,298 +430,344 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
       'pressure_new',
     ].contains(_activeFilter);
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        color: Colors.blueGrey.shade900,
-        child: Stack(
-          children: [
-            FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: LatLng(widget.lat, widget.lon),
-                initialZoom: 4.0,
-                interactionOptions: const InteractionOptions(
-                  flags:
-                      InteractiveFlag.drag |
-                      InteractiveFlag.pinchZoom |
-                      InteractiveFlag.doubleTapZoom,
-                ),
-                onTap: _onMapTap,
+    return Container(
+      height: MediaQuery.of(context).size.height,
+      color: Colors.blueGrey.shade900,
+      child: Stack(
+        children: [
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: LatLng(widget.lat, widget.lon),
+              initialZoom: 4.0,
+              interactionOptions: const InteractionOptions(
+                flags:
+                    InteractiveFlag.drag |
+                    InteractiveFlag.pinchZoom |
+                    InteractiveFlag.doubleTapZoom,
               ),
-              children: [
+              onTap: _onMapTap,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.example.cloudy',
+              ),
+              if (isWeatherLayer)
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.cloudy',
+                  urlTemplate:
+                      'https://tile.openweathermap.org/map/$_activeFilter/{z}/{x}/{y}.png?appid=$apiKey',
+                  backgroundColor: Colors.transparent,
                 ),
-                if (isWeatherLayer)
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openweathermap.org/map/$_activeFilter/{z}/{x}/{y}.png?appid=$apiKey',
-                    backgroundColor: Colors.transparent,
+              if (!isWeatherLayer) MarkerLayer(markers: _markers),
+              if (_tappedPoint != null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _tappedPoint!,
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.topCenter,
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: Colors.redAccent,
+                        size: 40,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ClipRRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                child: Container(
+                  padding: const EdgeInsets.only(top: 12, bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey.shade900.withOpacity(0.7),
+                    border: Border(
+                      bottom: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    ),
                   ),
-                if (!isWeatherLayer) MarkerLayer(markers: _markers),
-
-                if (_tappedPoint != null)
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: _tappedPoint!,
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.topCenter,
-                        child: const Icon(
-                          Icons.location_pin,
-                          color: Colors.redAccent,
-                          size: 40,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Глобальна карта',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (_isLoadingData)
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  color: Colors.blueAccent,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 36,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: _filters.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            final filter = _filters[index];
+                            final isActive = _activeFilter == filter['id'];
+                            return GestureDetector(
+                              onTap: () => _handleFilterChange(filter['id']!),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? Colors.blueAccent
+                                      : Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  filter['name']!,
+                                  style: TextStyle(
+                                    color: isActive
+                                        ? Colors.white
+                                        : Colors.white70,
+                                    fontSize: 13,
+                                    fontWeight: isActive
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
                   ),
-              ],
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                  child: Container(
-                    padding: const EdgeInsets.only(top: 12, bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.blueGrey.shade900.withOpacity(0.7),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.white.withOpacity(0.1),
-                        ),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Глобальна карта',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              if (_isLoadingData)
-                                const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.blueAccent,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          height: 36,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: _filters.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 8),
-                            itemBuilder: (context, index) {
-                              final filter = _filters[index];
-                              final isActive = _activeFilter == filter['id'];
-
-                              return GestureDetector(
-                                onTap: () => _handleFilterChange(filter['id']!),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isActive
-                                        ? Colors.blueAccent
-                                        : Colors.white.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    filter['name']!,
-                                    style: TextStyle(
-                                      color: isActive
-                                          ? Colors.white
-                                          : Colors.white70,
-                                      fontSize: 13,
-                                      fontWeight: isActive
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
               ),
             ),
-
-            if (_isLoadingTappedLocation || _tappedLocationInfo != null)
-              Positioned(
-                bottom: 30,
-                left: 16,
-                right: 80,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blueGrey.shade900.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                        ),
-                      ),
-                      child: _isLoadingTappedLocation
-                          ? const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.blueAccent,
-                                    strokeWidth: 2,
+          ),
+          if (_buildMapLegend() != null)
+            Positioned(
+              top: 115,
+              left: 16,
+              right: 16,
+              child: _buildMapLegend()!,
+            ),
+          if (_isLoadingTappedLocation || _tappedLocationInfo != null)
+            Positioned(
+              bottom: 30,
+              left: 16,
+              right: 80,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.blueGrey.shade900.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: _isLoadingTappedLocation
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.blueAccent,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Отримання даних...',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    color: Colors.redAccent,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _tappedLocationInfo!['name'],
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Шир: ${_tappedLocationInfo!['lat'].toStringAsFixed(4)}, Довг: ${_tappedLocationInfo!['lon'].toStringAsFixed(4)}',
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (_tappedLocationInfo!['temp'] != null)
+                                    Text(
+                                      '${_tappedLocationInfo!['temp'].round()}°C',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w300,
+                                      ),
+                                    ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white54,
+                                      size: 20,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      setState(() {
+                                        _tappedPoint = null;
+                                        _tappedLocationInfo = null;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8, left: 2),
+                                child: Text(
+                                  _getLayerDetailedMetrics(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11.5,
+                                    height: 1.3,
                                   ),
                                 ),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Отримання даних...',
-                                  style: TextStyle(color: Colors.white70),
-                                ),
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  color: Colors.redAccent,
-                                  size: 28,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
+                              ),
+                              if (_tappedLocationInfo!['aqi'] != null &&
+                                  _tappedLocationInfo!['aqi'] >= 4)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 10),
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: Colors.redAccent.withOpacity(0.4),
+                                    ),
+                                  ),
+                                  child: const Row(
                                     children: [
-                                      Text(
-                                        _tappedLocationInfo!['name'],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      Icon(
+                                        Icons.warning_amber_rounded,
+                                        color: Colors.white,
+                                        size: 18,
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Шир: ${_tappedLocationInfo!['lat'].toStringAsFixed(4)}, Довг: ${_tappedLocationInfo!['lon'].toStringAsFixed(4)}',
-                                        style: const TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 12,
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Якість повітря нездорова в цій області.',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                if (_tappedLocationInfo!['temp'] != null)
-                                  Text(
-                                    '${_tappedLocationInfo!['temp'].round()}°C',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w300,
-                                    ),
-                                  ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.close,
-                                    color: Colors.white54,
-                                    size: 20,
-                                  ),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  onPressed: () {
-                                    setState(() {
-                                      _tappedPoint = null;
-                                      _tappedLocationInfo = null;
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                    ),
+                            ],
+                          ),
                   ),
                 ),
               ),
-            Positioned(
-              right: 16,
-              bottom: 30,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FloatingActionButton(
-                    heroTag: 'center_city',
-                    onPressed: _centerOnCurrentCity,
-                    backgroundColor: Colors.blueGrey.shade800,
-                    elevation: 0,
-                    highlightElevation: 0,
-                    child: const Icon(Icons.location_city, color: Colors.white),
-                  ),
-                  const SizedBox(height: 12),
-                  FloatingActionButton(
-                    heroTag: 'my_location',
-                    onPressed: _centerOnGPS,
-                    backgroundColor: Colors.blueAccent,
-                    elevation: 0,
-                    highlightElevation: 0,
-                    child: _isLoadingLocation
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Icon(Icons.my_location, color: Colors.white),
-                  ),
-                ],
-              ),
             ),
-          ],
-        ),
+          Positioned(
+            right: 16,
+            bottom: 30,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton(
+                  heroTag: 'center_city',
+                  onPressed: _centerOnCurrentCity,
+                  backgroundColor: Colors.blueGrey.shade800,
+                  elevation: 0,
+                  highlightElevation: 0,
+                  child: const Icon(Icons.location_city, color: Colors.white),
+                ),
+                const SizedBox(height: 12),
+                FloatingActionButton(
+                  heroTag: 'my_location',
+                  onPressed: _centerOnGPS,
+                  backgroundColor: Colors.blueAccent,
+                  elevation: 0,
+                  highlightElevation: 0,
+                  child: _isLoadingLocation
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.my_location, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
