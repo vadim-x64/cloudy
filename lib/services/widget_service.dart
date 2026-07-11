@@ -33,8 +33,6 @@ class WeatherWidgetUI extends StatelessWidget {
 
     switch (partOfDay) {
       case 'Світанок':
-        baseColors = [Colors.orange.shade900, Colors.orange.shade600];
-        break;
       case 'Ранок':
         baseColors = [const Color(0xFF1F6F5E), Colors.greenAccent.shade700];
         break;
@@ -50,7 +48,7 @@ class WeatherWidgetUI extends StatelessWidget {
       case 'Сутінки':
       case 'Ніч':
       default:
-        baseColors = [const Color(0xFF10092B), const Color(0xFF0A1B3F)];
+        baseColors = [const Color(0xFF14001F), const Color(0xFF310051)];
         break;
     }
 
@@ -64,18 +62,62 @@ class WeatherWidgetUI extends StatelessWidget {
     return baseColors;
   }
 
+  String _cleanDesc(String raw) {
+    String desc = raw
+        .toLowerCase()
+        .replaceAll('часткова хмарність', 'хмарно з проясненнями')
+        .replaceAll('місцями хмарно', 'мінлива хмарність')
+        .replaceAll('кілька хмар', 'малохмарно')
+        .replaceAll('чисте небо', 'ясно')
+        .replaceAll('мряка', 'дрібний дощ')
+        .replaceAll('димка', 'імла');
+    return desc.isNotEmpty
+        ? '${desc[0].toUpperCase()}${desc.substring(1)}'
+        : '';
+  }
+
+  String _getUkrainianWeekdayShort(int weekday) {
+    const days = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'НД'];
+    return days[weekday - 1];
+  }
+
+  Widget _buildDetailItem(IconData icon, String label, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Colors.white70, size: 24),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            decoration: TextDecoration.none,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            decoration: TextDecoration.none,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    String desc = weather.description.isNotEmpty
-        ? '${weather.description[0].toUpperCase()}${weather.description.substring(1)}'
-        : '';
-
-    final daily = weather.dailyForecast.isNotEmpty
-        ? weather.dailyForecast.first
-        : null;
+    String desc = _cleanDesc(weather.description);
+    String pressureStr = '${(weather.pressure * 0.750062).round()} мм';
+    String sunriseStr = DateFormat('HH:mm').format(weather.sunrise);
+    String sunsetStr = DateFormat('HH:mm').format(weather.sunset);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(60),
+      borderRadius: BorderRadius.circular(50),
       child: Container(
         width: 900,
         height: 600,
@@ -87,9 +129,9 @@ class WeatherWidgetUI extends StatelessWidget {
           ),
           border: Border.all(color: Colors.white.withOpacity(0.25), width: 2),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 45, vertical: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -99,112 +141,176 @@ class WeatherWidgetUI extends StatelessWidget {
                     weather.cityName,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 45,
+                      fontSize: 36,
                       fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.none,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 20),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    desc,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w600,
+                const Icon(Icons.refresh, color: Colors.white, size: 38),
+              ],
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DateFormat('HH:mm').format(weather.currentLocalTime),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 70,
+                        fontWeight: FontWeight.w300,
+                        height: 1.0,
+                        decoration: TextDecoration.none,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${DateFormat('dd.MM.yyyy').format(weather.currentLocalTime)} • ${weather.partOfDay}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${weather.temperature.round()}°',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 85,
+                        fontWeight: FontWeight.w200,
+                        height: 1.0,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Відчувається: ${weather.feelsLike.round()}°',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 150,
+                      child: Text(
+                        desc,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.none,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: AnimatedWeatherIcon(
+                          iconCode: weather.iconCode,
+                          size: 120,
+                          partOfDay: weather.partOfDay,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Expanded(
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${weather.temperature.round()}°',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 140,
-                          fontWeight: FontWeight.w200,
-                          height: 1.0,
-                        ),
-                      ),
-                      if (daily != null)
-                        Text(
-                          'Макс: ${daily.maxTemp.round()}° · Мін: ${daily.minTemp.round()}°',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: 26,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                    ],
+                  _buildDetailItem(
+                    Icons.water_drop,
+                    'Вологість',
+                    '${weather.humidity}%',
                   ),
-                  SizedBox(
-                    width: 170,
-                    height: 170,
-                    child: AnimatedWeatherIcon(
-                      iconCode: weather.iconCode,
-                      size: 170,
-                      partOfDay: weather.partOfDay,
-                    ),
+                  _buildDetailItem(
+                    Icons.umbrella,
+                    'Опади',
+                    '${weather.precipitation} мм',
                   ),
+                  _buildDetailItem(
+                    Icons.air,
+                    'Вітер',
+                    '${weather.windSpeed} м/с',
+                  ),
+                  _buildDetailItem(Icons.speed, 'Тиск', pressureStr),
+                  _buildDetailItem(Icons.wb_twilight, 'Схід', sunriseStr),
+                  _buildDetailItem(Icons.nights_stay, 'Захід', sunsetStr),
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(35),
+                borderRadius: BorderRadius.circular(25),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: weather.hourlyForecast.take(5).map((hourly) {
+                children: weather.dailyForecast.take(4).map((daily) {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        DateFormat('HH:mm').format(hourly.time),
+                        _getUkrainianWeekdayShort(daily.date.weekday),
                         style: const TextStyle(
                           color: Colors.white70,
-                          fontSize: 22,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.none,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       SizedBox(
-                        width: 55,
-                        height: 55,
-                        child: AnimatedWeatherIcon(
-                          iconCode: hourly.iconCode,
-                          size: 55,
-                          partOfDay: weather.partOfDay,
+                        width: 60,
+                        height: 60,
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          child: AnimatedWeatherIcon(
+                            iconCode: daily.iconCode,
+                            size: 60,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       Text(
-                        '${hourly.temperature.round()}°',
+                        '${daily.maxTemp.round()}° / ${daily.minTemp.round()}°',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 28,
+                          fontSize: 18,
+                          decoration: TextDecoration.none,
                         ),
                       ),
                     ],
