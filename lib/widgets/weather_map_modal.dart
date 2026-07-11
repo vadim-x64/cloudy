@@ -143,8 +143,8 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
 
         final newMarkers = <Marker>[];
         for (var event in events) {
-          if (event['geometries'] != null && event['geometries'].isNotEmpty) {
-            final geo = event['geometries'][0];
+          if (event['geometry'] != null && event['geometry'].isNotEmpty) {
+            final geo = event['geometry'][0];
             double lat = 0.0;
             double lon = 0.0;
 
@@ -193,8 +193,8 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
 
         final newMarkers = <Marker>[];
         for (var event in events) {
-          if (event['geometries'] != null && event['geometries'].isNotEmpty) {
-            final geo = event['geometries'][0];
+          if (event['geometry'] != null && event['geometry'].isNotEmpty) {
+            final geo = event['geometry'][0];
             double lat = 0.0;
             double lon = 0.0;
 
