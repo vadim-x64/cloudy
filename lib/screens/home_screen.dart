@@ -709,28 +709,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
         extendBody: true,
-        floatingActionButton: _weather != null
-            ? Transform.translate(
-                offset: const Offset(0, 0),
-                child: AnimatedEntrance(
-                  delay: const Duration(milliseconds: 600),
-                  child: FloatingActionButton(
-                    key: _aiChatKey,
-                    onPressed: _openAiChat,
-                    backgroundColor: Colors.black.withOpacity(0.25),
-                    elevation: 0,
-                    highlightElevation: 0,
-                    focusElevation: 0,
-                    hoverElevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(200),
-                      side: BorderSide(color: Colors.white.withOpacity(0.6)),
-                    ),
-                    child: const AnimatedAiIcon(),
-                  ),
-                ),
-              )
-            : null,
         body: Stack(
           children: [
             AnimatedContainer(
@@ -774,422 +752,184 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 10,
+                    padding: const EdgeInsets.only(
+                      left: 20.0,
+                      right: 20.0,
+                      top: 10.0,
+                      bottom: 100.0,
                     ),
                     child: Column(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              key: _searchKey,
-                              child: Autocomplete<CitySuggestion>(
-                                optionsBuilder:
-                                    (TextEditingValue textEditingValue) async {
-                                      return await _weatherService
-                                          .fetchCitySuggestions(
-                                            textEditingValue.text,
-                                          );
-                                    },
-                                displayStringForOption:
-                                    (CitySuggestion option) => option.name,
-                                onSelected: _loadWeatherBySuggestion,
-                                fieldViewBuilder:
-                                    (
-                                      context,
-                                      controller,
-                                      focusNode,
-                                      onEditingComplete,
-                                    ) {
-                                      return ValueListenableBuilder<
-                                        TextEditingValue
-                                      >(
-                                        valueListenable: controller,
-                                        builder: (context, value, child) {
-                                          return TextField(
-                                            controller: controller,
-                                            focusNode: focusNode,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
-                                            decoration: InputDecoration(
-                                              hintText: 'Пошук',
-                                              hintStyle: const TextStyle(
-                                                color: Colors.white70,
-                                              ),
-                                              filled: true,
-                                              fillColor: Colors.white
-                                                  .withOpacity(0.2),
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(25),
-                                                borderSide: BorderSide.none,
-                                              ),
-                                              prefixIcon: const Icon(
-                                                Icons.search,
-                                                color: Colors.white70,
-                                              ),
-                                              suffixIcon: value.text.isNotEmpty
-                                                  ? IconButton(
-                                                      icon: const Icon(
-                                                        Icons.clear,
-                                                        color: Colors.white70,
-                                                      ),
-                                                      onPressed: () {
-                                                        controller.clear();
-                                                        focusNode.unfocus();
-                                                      },
-                                                    )
-                                                  : null,
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 0,
-                                                  ),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                optionsViewBuilder: (context, onSelected, options) {
-                                  return Align(
-                                    alignment: Alignment.topLeft,
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: Container(
-                                        width:
-                                            MediaQuery.of(context).size.width -
-                                            130,
-                                        margin: const EdgeInsets.only(top: 8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blueGrey.shade900
-                                              .withOpacity(0.95),
-                                          borderRadius: BorderRadius.circular(
-                                            20,
-                                          ),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: Colors.black26,
-                                              blurRadius: 10,
-                                              spreadRadius: 2,
-                                            ),
-                                          ],
-                                        ),
-                                        child: ListView.builder(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 10,
-                                          ),
-                                          shrinkWrap: true,
-                                          itemCount: options.length,
-                                          itemBuilder: (context, index) {
-                                            final option = options.elementAt(
-                                              index,
+                        if (!_isLoading)
+                          Row(
+                            children: [
+                              Expanded(
+                                key: _searchKey,
+                                child: Autocomplete<CitySuggestion>(
+                                  optionsBuilder:
+                                      (
+                                        TextEditingValue textEditingValue,
+                                      ) async {
+                                        return await _weatherService
+                                            .fetchCitySuggestions(
+                                              textEditingValue.text,
                                             );
-                                            return ListTile(
-                                              title: Text(
-                                                option.name,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
+                                      },
+                                  displayStringForOption:
+                                      (CitySuggestion option) => option.name,
+                                  onSelected: _loadWeatherBySuggestion,
+                                  fieldViewBuilder:
+                                      (
+                                        context,
+                                        controller,
+                                        focusNode,
+                                        onEditingComplete,
+                                      ) {
+                                        return ValueListenableBuilder<
+                                          TextEditingValue
+                                        >(
+                                          valueListenable: controller,
+                                          builder: (context, value, child) {
+                                            return TextField(
+                                              controller: controller,
+                                              focusNode: focusNode,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                              decoration: InputDecoration(
+                                                hintText: 'Пошук',
+                                                hintStyle: const TextStyle(
+                                                  color: Colors.white70,
                                                 ),
-                                              ),
-                                              subtitle: Text(
-                                                '${option.region.isNotEmpty ? '${option.region}, ' : ''}${option.country}',
-                                                style: const TextStyle(
-                                                  color: Colors.white54,
+                                                filled: true,
+                                                fillColor: Colors.white
+                                                    .withOpacity(0.2),
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(25),
+                                                  borderSide: BorderSide.none,
                                                 ),
+                                                prefixIcon: const Icon(
+                                                  Icons.search,
+                                                  color: Colors.white70,
+                                                ),
+                                                suffixIcon:
+                                                    value.text.isNotEmpty
+                                                    ? IconButton(
+                                                        icon: const Icon(
+                                                          Icons.clear,
+                                                          color: Colors.white70,
+                                                        ),
+                                                        onPressed: () {
+                                                          controller.clear();
+                                                          focusNode.unfocus();
+                                                        },
+                                                      )
+                                                    : null,
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 0,
+                                                    ),
                                               ),
-                                              leading: const Icon(
-                                                Icons.location_city,
-                                                color: Colors.white70,
-                                              ),
-                                              onTap: () => onSelected(option),
                                             );
                                           },
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              key: _settingsKey,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(25),
-                              ),
-                              child: AnimatedSize(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (_isSettingsExpanded) ...[
-                                      PopupMenuButton<TempUnit>(
-                                        elevation: 0,
-                                        icon: const Icon(
-                                          Icons.thermostat,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
-                                        color: Colors.blueGrey.shade900,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            15,
-                                          ),
-                                        ),
-                                        onSelected: (unit) => setState(
-                                          () => _selectedUnit = unit,
-                                        ),
-                                        itemBuilder: (context) => [
-                                          PopupMenuItem(
-                                            value: TempUnit.celsius,
-                                            child: Text(
-                                              '°C - Цельсій',
-                                              style: TextStyle(
-                                                color:
-                                                    _selectedUnit ==
-                                                        TempUnit.celsius
-                                                    ? Colors.blueAccent
-                                                    : Colors.white,
+                                        );
+                                      },
+                                  optionsViewBuilder:
+                                      (context, onSelected, options) {
+                                        return Align(
+                                          alignment: Alignment.topLeft,
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: Container(
+                                              width:
+                                                  MediaQuery.of(
+                                                    context,
+                                                  ).size.width -
+                                                  40,
+                                              margin: const EdgeInsets.only(
+                                                top: 8,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blueGrey.shade900
+                                                    .withOpacity(0.95),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                boxShadow: const [
+                                                  BoxShadow(
+                                                    color: Colors.black26,
+                                                    blurRadius: 10,
+                                                    spreadRadius: 2,
+                                                  ),
+                                                ],
+                                              ),
+                                              child: ListView.builder(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                    ),
+                                                shrinkWrap: true,
+                                                itemCount: options.length,
+                                                itemBuilder: (context, index) {
+                                                  final option = options
+                                                      .elementAt(index);
+                                                  return ListTile(
+                                                    title: Text(
+                                                      option.name,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    subtitle: Text(
+                                                      '${option.region.isNotEmpty ? '${option.region}, ' : ''}${option.country}',
+                                                      style: const TextStyle(
+                                                        color: Colors.white54,
+                                                      ),
+                                                    ),
+                                                    leading: const Icon(
+                                                      Icons.location_city,
+                                                      color: Colors.white70,
+                                                    ),
+                                                    onTap: () =>
+                                                        onSelected(option),
+                                                  );
+                                                },
                                               ),
                                             ),
                                           ),
-                                          PopupMenuItem(
-                                            value: TempUnit.fahrenheit,
-                                            child: Text(
-                                              '°F - Фаренгейт',
-                                              style: TextStyle(
-                                                color:
-                                                    _selectedUnit ==
-                                                        TempUnit.fahrenheit
-                                                    ? Colors.blueAccent
-                                                    : Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                          PopupMenuItem(
-                                            value: TempUnit.kelvin,
-                                            child: Text(
-                                              'K - Кельвін',
-                                              style: TextStyle(
-                                                color:
-                                                    _selectedUnit ==
-                                                        TempUnit.kelvin
-                                                    ? Colors.blueAccent
-                                                    : Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.public,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
-                                        onPressed: () {
-                                          if (_weather != null) {
-                                            showModalBottomSheet(
-                                              context: context,
-                                              isScrollControlled: true,
-                                              backgroundColor:
-                                                  Colors.transparent,
-                                              elevation: 0,
-                                              builder: (context) =>
-                                                  WeatherMapModal(
-                                                    lat: _currentLat,
-                                                    lon: _currentLon,
-                                                  ),
-                                            );
-                                          }
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.info_outline,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
-                                        onPressed: () {
-                                          Navigator.of(context).push(
-                                            PageRouteBuilder(
-                                              transitionDuration:
-                                                  const Duration(
-                                                    milliseconds: 500,
-                                                  ),
-                                              reverseTransitionDuration:
-                                                  const Duration(
-                                                    milliseconds: 500,
-                                                  ),
-                                              pageBuilder:
-                                                  (
-                                                    context,
-                                                    animation,
-                                                    secondaryAnimation,
-                                                  ) => AppInfoScreen(
-                                                    backgroundColors:
-                                                        _getBackgroundColors(),
-                                                    partOfDay:
-                                                        _weather?.partOfDay ??
-                                                        'День',
-                                                  ),
-                                              transitionsBuilder:
-                                                  (
-                                                    context,
-                                                    animation,
-                                                    secondaryAnimation,
-                                                    child,
-                                                  ) {
-                                                    final curvedAnimation =
-                                                        CurvedAnimation(
-                                                          parent: animation,
-                                                          curve: Curves
-                                                              .easeInOutCubic,
-                                                        );
-                                                    return SlideTransition(
-                                                      position:
-                                                          Tween<Offset>(
-                                                            begin: const Offset(
-                                                              1.0,
-                                                              0.0,
-                                                            ),
-                                                            end: Offset.zero,
-                                                          ).animate(
-                                                            curvedAnimation,
-                                                          ),
-                                                      child: child,
-                                                    );
-                                                  },
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.tune_rounded,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
-                                        tooltip: 'Налаштування',
-                                        onPressed: () async {
-                                          await Navigator.of(context).push(
-                                            PageRouteBuilder(
-                                              transitionDuration:
-                                                  const Duration(
-                                                    milliseconds: 500,
-                                                  ),
-                                              reverseTransitionDuration:
-                                                  const Duration(
-                                                    milliseconds: 500,
-                                                  ),
-                                              pageBuilder:
-                                                  (
-                                                    context,
-                                                    animation,
-                                                    secondaryAnimation,
-                                                  ) => SettingsScreen(
-                                                    backgroundColors:
-                                                        _getBackgroundColors(),
-                                                  ),
-                                              transitionsBuilder:
-                                                  (
-                                                    context,
-                                                    animation,
-                                                    secondaryAnimation,
-                                                    child,
-                                                  ) {
-                                                    final curvedAnimation =
-                                                        CurvedAnimation(
-                                                          parent: animation,
-                                                          curve: Curves
-                                                              .easeInOutCubic,
-                                                        );
-                                                    return SlideTransition(
-                                                      position:
-                                                          Tween<Offset>(
-                                                            begin: const Offset(
-                                                              1.0,
-                                                              0.0,
-                                                            ),
-                                                            end: Offset.zero,
-                                                          ).animate(
-                                                            curvedAnimation,
-                                                          ),
-                                                      child: child,
-                                                    );
-                                                  },
-                                            ),
-                                          );
-                                          if (mounted) {
-                                            _loadSettings();
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                    AnimatedRotation(
-                                      turns: _isSettingsExpanded ? 0.5 : 0.0,
-                                      duration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.settings,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            _isSettingsExpanded =
-                                                !_isSettingsExpanded;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
+                                        );
+                                      },
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              key: _locationKey,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.my_location,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
-                                onPressed: _loadWeatherByLocation,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 30),
+                            ],
+                          ),
+                        if (!_isLoading) const SizedBox(height: 30),
 
                         if (_isLoading)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 100),
-                            child: Column(
-                              children: [
-                                const DynamicLoader(size: 75),
-                                const SizedBox(height: 25),
-                                const Text(
-                                  'Чекайте хвильку, отримуємо дані...',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 0.5,
+                          SizedBox(
+                            width: double.infinity,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 180),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  const DynamicLoader(size: 75),
+                                  const SizedBox(height: 25),
+                                  const Text(
+                                    'Чекайте хвильку, отримуємо дані...',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           )
                         else if (_errorMessage != null)
@@ -1907,9 +1647,339 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ),
               ),
+
+            if (_weather != null && !_isLoading)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: _buildBottomNavBar(),
+              ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.only(left: 15, right: 15, bottom: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 15,
+              spreadRadius: 2,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.shade900.withOpacity(0.65),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.15),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  canvasColor: Colors.transparent,
+                ),
+                child: BottomNavigationBar(
+                  backgroundColor: Colors.transparent,
+                  type: BottomNavigationBarType.fixed,
+                  elevation: 0,
+                  selectedItemColor: Colors.blueAccent,
+                  unselectedItemColor: Colors.white70,
+                  showSelectedLabels: true,
+                  showUnselectedLabels: true,
+                  selectedLabelStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 11,
+                  ),
+                  currentIndex: 0,
+                  onTap: (index) {
+                    if (index == 1) {
+                      _loadWeatherByLocation();
+                    } else if (index == 2) {
+                      _openAiChat();
+                    } else if (index == 3) {
+                      _showSettingsBottomSheet();
+                    }
+                  },
+                  items: [
+                    const BottomNavigationBarItem(
+                      icon: Padding(
+                        padding: EdgeInsets.only(bottom: 4, top: 4),
+                        child: Icon(Icons.home_outlined),
+                      ),
+                      activeIcon: Padding(
+                        padding: EdgeInsets.only(bottom: 4, top: 4),
+                        child: Icon(Icons.home),
+                      ),
+                      label: 'Головна',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Padding(
+                        padding: const EdgeInsets.only(bottom: 4, top: 4),
+                        child: Container(
+                          key: _locationKey,
+                          child: const Icon(Icons.my_location),
+                        ),
+                      ),
+                      label: 'Локація',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Padding(
+                        padding: const EdgeInsets.only(bottom: 4, top: 4),
+                        child: Container(
+                          key: _aiChatKey,
+                          child: const AnimatedAiIcon(),
+                        ),
+                      ),
+                      label: 'ШІ Чат',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Padding(
+                        padding: const EdgeInsets.only(bottom: 4, top: 4),
+                        child: Container(
+                          key: _settingsKey,
+                          child: const Icon(Icons.settings_outlined),
+                        ),
+                      ),
+                      label: 'Налаштування',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSettingsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+            child: Container(
+              padding: const EdgeInsets.only(
+                top: 16,
+                bottom: 30,
+                left: 20,
+                right: 20,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.shade900.withOpacity(0.8),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const Text(
+                    'Меню',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ListTile(
+                    leading: const Icon(Icons.thermostat, color: Colors.white),
+                    title: const Text(
+                      'Одиниці виміру',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    trailing: DropdownButton<TempUnit>(
+                      value: _selectedUnit,
+                      dropdownColor: Colors.blueGrey.shade900,
+                      iconEnabledColor: Colors.white,
+                      style: const TextStyle(
+                        color: Colors.blueAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      underline: const SizedBox(),
+                      onChanged: (unit) {
+                        if (unit != null) {
+                          setState(() => _selectedUnit = unit);
+                          Navigator.pop(context);
+                        }
+                      },
+                      items: const [
+                        DropdownMenuItem(
+                          value: TempUnit.celsius,
+                          child: Text(
+                            '°C - Цельсій',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: TempUnit.fahrenheit,
+                          child: Text(
+                            '°F - Фаренгейт',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: TempUnit.kelvin,
+                          child: Text(
+                            'K - Кельвін',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.public, color: Colors.white),
+                    title: const Text(
+                      'Глобальна карта',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (_weather != null) {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          builder: (context) => WeatherMapModal(
+                            lat: _currentLat,
+                            lon: _currentLon,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.info_outline,
+                      color: Colors.white,
+                    ),
+                    title: const Text(
+                      'Про застосунок',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 500),
+                          reverseTransitionDuration: const Duration(
+                            milliseconds: 500,
+                          ),
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  AppInfoScreen(
+                                    backgroundColors: _getBackgroundColors(),
+                                    partOfDay: _weather?.partOfDay ?? 'День',
+                                  ),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                return SlideTransition(
+                                  position:
+                                      Tween<Offset>(
+                                        begin: const Offset(1.0, 0.0),
+                                        end: Offset.zero,
+                                      ).animate(
+                                        CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeInOutCubic,
+                                        ),
+                                      ),
+                                  child: child,
+                                );
+                              },
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.tune_rounded,
+                      color: Colors.white,
+                    ),
+                    title: const Text(
+                      'Налаштування',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.of(context).push(
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 500),
+                          reverseTransitionDuration: const Duration(
+                            milliseconds: 500,
+                          ),
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  SettingsScreen(
+                                    backgroundColors: _getBackgroundColors(),
+                                  ),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                return SlideTransition(
+                                  position:
+                                      Tween<Offset>(
+                                        begin: const Offset(1.0, 0.0),
+                                        end: Offset.zero,
+                                      ).animate(
+                                        CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeInOutCubic,
+                                        ),
+                                      ),
+                                  child: child,
+                                );
+                              },
+                        ),
+                      );
+                      if (mounted) _loadSettings();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
