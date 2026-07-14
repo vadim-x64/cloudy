@@ -115,6 +115,7 @@ class _AiChatModalState extends State<AiChatModal> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+    final safeAreaTop = MediaQuery.of(context).padding.top;
 
     final totalBottomPadding = bottomInset > 0
         ? bottomInset + 10
@@ -125,7 +126,7 @@ class _AiChatModalState extends State<AiChatModal> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
         child: Container(
-          height: MediaQuery.of(context).size.height * 0.75,
+          height: MediaQuery.of(context).size.height - safeAreaTop - 12,
           padding: EdgeInsets.only(
             bottom: totalBottomPadding,
             left: 16,

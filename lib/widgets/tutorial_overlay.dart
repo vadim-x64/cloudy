@@ -390,7 +390,7 @@ class _OverlayCutoutPainter extends CustomPainter {
     final backgroundPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    final expandedCutout = cutout.inflate(8.0);
+    final expandedCutout = cutout.inflate(6.0);
     final punchoutPath = Path()
       ..addRRect(
         RRect.fromRectAndRadius(expandedCutout, const Radius.circular(20)),

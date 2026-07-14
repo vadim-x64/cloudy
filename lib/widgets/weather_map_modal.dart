@@ -430,8 +430,10 @@ class _WeatherMapModalState extends State<WeatherMapModal> {
       'pressure_new',
     ].contains(_activeFilter);
 
+    final safeAreaTop = MediaQuery.of(context).padding.top;
+
     return Container(
-      height: MediaQuery.of(context).size.height,
+      height: MediaQuery.of(context).size.height - safeAreaTop - 12,
       color: Colors.blueGrey.shade900,
       child: Stack(
         children: [

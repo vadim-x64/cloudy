@@ -171,7 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           trailing: IconButton(
                             icon: const Icon(
                               Icons.add_circle,
-                              color: Color(0xFFC8FF00),
+                              color: Colors.white,
                               size: 28,
                             ),
                             onPressed: () async {

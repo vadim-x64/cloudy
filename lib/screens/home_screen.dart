@@ -38,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey _detailsKey = GlobalKey();
   final GlobalKey _aiChatKey = GlobalKey();
   final GlobalKey _locationKey = GlobalKey();
+  final GlobalKey _homeKey = GlobalKey();
 
   WeatherModel? _weather;
   DateTime? _lastUpdated;
@@ -118,18 +119,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 'Шукайте будь-яке місто у світі, щоб дізнатися там погоду.',
           ),
           TutorialStep(
-            key: _settingsKey,
-            title: 'Меню налаштувань',
-            description:
-                'Натисніть на шестерню, щоб змінити одиниці виміру, відкрити погодну карту, дізнатися більше про застосунок або увімкнути/вимкнути показ цих підказок при старті.',
-          ),
-          TutorialStep(
-            key: _locationKey,
-            title: 'Моя локація',
-            description:
-                'Натисніть сюди, щоб миттєво визначити координати по GPS і оновити погоду для вашого поточного місця.',
-          ),
-          TutorialStep(
             key: _tempKey,
             title: 'Секретна анімація',
             description:
@@ -142,10 +131,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 'Розгорніть це меню для перегляду вологості, тиску, якості повітря та прогнозу на 5 днів.',
           ),
           TutorialStep(
+            key: _homeKey,
+            title: 'Головна',
+            description: 'Повертає вас до головного екрана з поточною погодою.',
+          ),
+          TutorialStep(
+            key: _locationKey,
+            title: 'Моя локація',
+            description:
+                'Натисніть сюди, щоб миттєво визначити координати по GPS і оновити погоду для вашого поточного місця.',
+          ),
+          TutorialStep(
             key: _aiChatKey,
             title: 'ШІ-Асистент',
             description:
                 'Ваш персональний метеоролог! Запитуйте поради щодо одягу або парасолі.',
+          ),
+          TutorialStep(
+            key: _settingsKey,
+            title: 'Меню налаштувань',
+            description:
+                'Натисніть на шестерню, щоб змінити одиниці виміру, відкрити погодну карту, дізнатися більше про застосунок або увімкнути/вимкнути показ цих підказок при старті.',
           ),
         ], _weather!.partOfDay);
       });
@@ -1663,29 +1669,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return SafeArea(
       child: Container(
         margin: const EdgeInsets.only(left: 15, right: 15, bottom: 20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 15,
-              spreadRadius: 2,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(200),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.blueGrey.shade900.withOpacity(0.65),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.15),
-                  width: 1.5,
+                borderRadius: BorderRadius.circular(200),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withOpacity(0.20),
+                    Colors.white.withOpacity(0.06),
+                    Colors.black.withOpacity(0.08),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
-                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.25),
+                  width: 1,
+                ),
               ),
               child: Theme(
                 data: Theme.of(context).copyWith(
@@ -1697,18 +1701,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   backgroundColor: Colors.transparent,
                   type: BottomNavigationBarType.fixed,
                   elevation: 0,
-                  selectedItemColor: Colors.blueAccent,
-                  unselectedItemColor: Colors.white70,
-                  showSelectedLabels: true,
-                  showUnselectedLabels: true,
-                  selectedLabelStyle: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontWeight: FontWeight.normal,
-                    fontSize: 11,
-                  ),
+                  iconSize: 30,
+                  selectedItemColor: Colors.white,
+                  unselectedItemColor: Colors.white,
+                  showSelectedLabels: false,
+                  showUnselectedLabels: false,
                   currentIndex: 0,
                   onTap: (index) {
                     if (index == 1) {
@@ -1720,20 +1717,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     }
                   },
                   items: [
-                    const BottomNavigationBarItem(
+                    BottomNavigationBarItem(
                       icon: Padding(
-                        padding: EdgeInsets.only(bottom: 4, top: 4),
-                        child: Icon(Icons.home_outlined),
-                      ),
-                      activeIcon: Padding(
-                        padding: EdgeInsets.only(bottom: 4, top: 4),
-                        child: Icon(Icons.home),
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Container(
+                          key: _homeKey,
+                          child: const Icon(Icons.home),
+                        ),
                       ),
                       label: 'Головна',
                     ),
                     BottomNavigationBarItem(
                       icon: Padding(
-                        padding: const EdgeInsets.only(bottom: 4, top: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 5),
                         child: Container(
                           key: _locationKey,
                           child: const Icon(Icons.my_location),
@@ -1743,7 +1739,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
                     BottomNavigationBarItem(
                       icon: Padding(
-                        padding: const EdgeInsets.only(bottom: 4, top: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 5),
                         child: Container(
                           key: _aiChatKey,
                           child: const AnimatedAiIcon(),
@@ -1753,7 +1749,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
                     BottomNavigationBarItem(
                       icon: Padding(
-                        padding: const EdgeInsets.only(bottom: 4, top: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 5),
                         child: Container(
                           key: _settingsKey,
                           child: const Icon(Icons.settings_outlined),
@@ -2229,7 +2225,7 @@ class _AnimatedAiIconState extends State<AnimatedAiIcon> {
         _icons[_currentIndex],
         key: ValueKey<int>(_currentIndex),
         color: Colors.white,
-        size: 26,
+        size: 30,
       ),
     );
   }
